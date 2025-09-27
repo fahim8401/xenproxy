@@ -12,26 +12,27 @@
 <body class="bg-gray-100 min-h-screen">
     <div class="flex">
         <!-- Sidebar -->
-        <div class="w-64 bg-gray-800 text-white min-h-screen">
-            <div class="p-4">
-                <h1 class="text-xl font-bold">IP Gateway Admin</h1>
+        <div class="w-64 bg-gray-800 text-white min-h-screen shadow-lg">
+            <div class="p-4 border-b border-gray-700">
+                <h1 class="text-xl font-bold text-white">XenProxy Admin</h1>
+                <p class="text-xs text-gray-400 mt-1">LXC Gateway Manager</p>
             </div>
-            <nav class="mt-8">
-                <a href="{{ url_for('dashboard') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'dashboard' %}bg-gray-700{% endif %}">
-                    📊 Dashboard
+            <nav class="mt-6 px-2">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link {% if request.endpoint == 'dashboard' %}sidebar-active{% endif %}">
+                    <span class="mr-3">📊</span> Dashboard
                 </a>
-                <a href="{{ url_for('containers') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'containers' %}bg-gray-700{% endif %}">
-                    � Containers
+                <a href="{{ url_for('containers') }}" class="sidebar-link {% if request.endpoint == 'containers' %}sidebar-active{% endif %}">
+                    <span class="mr-3">🖥️</span> Containers
                 </a>
-                <a href="{{ url_for('logs') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'logs' %}bg-gray-700{% endif %}">
-                    � Audit Logs
+                <a href="{{ url_for('logs') }}" class="sidebar-link {% if request.endpoint == 'logs' %}sidebar-active{% endif %}">
+                    <span class="mr-3">📋</span> Audit Logs
                 </a>
-                <a href="{{ url_for('system_settings') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'system_settings' %}bg-gray-700{% endif %}">
-                    ⚙️ System Settings
+                <a href="{{ url_for('system_settings') }}" class="sidebar-link {% if request.endpoint == 'system_settings' %}sidebar-active{% endif %}">
+                    <span class="mr-3">⚙️</span> System Settings
                 </a>
                 <div class="border-t border-gray-600 mt-8 pt-4">
-                    <a href="{{ url_for('logout') }}" class="block py-2 px-4 hover:bg-red-700 text-red-300">
-                        🚪 Logout
+                    <a href="{{ url_for('logout') }}" class="sidebar-link text-red-300 hover:bg-red-700 hover:text-white">
+                        <span class="mr-3">🚪</span> Logout
                     </a>
                 </div>
             </nav>

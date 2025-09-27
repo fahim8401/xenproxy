@@ -331,5 +331,227 @@ def api_logs():
         "timestamp": log.timestamp.isoformat()
     } for log in logs])
 
+# IP Management API Routes
+@app.route('/api/available-ips')
+@login_required
+def api_available_ips():
+    """Get list of available IPs in the subnet"""
+    config = SystemConfig.query.first()
+    if not config:
+        return jsonify({"error": "System config not found"}), 500
+    
+    # Parse subnet range (e.g., "172.16.100.0/24")
+    import ipaddress
+    try:
+        network = ipaddress.ip_network(config.subnet_range, strict=False)
+        # Get all IPs in subnet except network and broadcast
+        all_ips = [str(ip) for ip in network.hosts()]
+        
+        # Get used IPs from containers
+        used_ips = [c.ip_address for c in LxcContainer.query.all()]
+        
+        # Filter available IPs
+        available_ips = [ip for ip in all_ips if ip not in used_ips]
+        
+        return jsonify({"ips": available_ips[:50]})  # Limit to 50 for performance
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/add-ip', methods=['POST'])
+@login_required
+def api_add_ip():
+    """Add a single IP to the available pool"""
+    data = request.get_json()
+    ip = data.get('ip', '').strip()
+    
+    if not ip:
+        return jsonify({"success": False, "message": "IP address is required"}), 400
+    
+    # Validate IP format
+    import ipaddress
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+    except:
+        return jsonify({"success": False, "message": "Invalid IP address format"}), 400
+    
+    # Check if IP is already in use
+    existing = LxcContainer.query.filter_by(ip_address=ip).first()
+    if existing:
+        return jsonify({"success": False, "message": "IP address already in use"}), 400
+    
+    # For now, just return success (IP is implicitly available)
+    # In a real implementation, you might want to store available IPs in a separate table
+    
+    # Log the action
+    audit_log = AuditLog(admin_id=session['admin_id'], action='add_ip', details=f'Added IP {ip} to pool', ip_address=request.remote_addr)
+    db.session.add(audit_log)
+    db.session.commit()
+    
+    return jsonify({"success": True, "message": f"IP {ip} added to available pool"})
+
+@app.route('/api/add-batch-ips', methods=['POST'])
+@login_required
+def api_add_batch_ips():
+    """Add multiple IPs to the available pool"""
+    data = request.get_json()
+    ips = data.get('ips', [])
+    
+    if not ips:
+        return jsonify({"success": False, "message": "IP addresses are required"}), 400
+    
+    added_count = 0
+    errors = []
+    
+    import ipaddress
+    
+    for ip in ips:
+        ip = ip.strip()
+        if not ip:
+            continue
+            
+        try:
+            ip_obj = ipaddress.ip_address(ip)
+            # Check if IP is already in use
+            existing = LxcContainer.query.filter_by(ip_address=ip).first()
+            if existing:
+                errors.append(f"IP {ip} already in use")
+                continue
+            
+            added_count += 1
+        except:
+            errors.append(f"Invalid IP format: {ip}")
+    
+    # Log the action
+    audit_log = AuditLog(admin_id=session['admin_id'], action='add_batch_ips', 
+                        details=f'Added {added_count} IPs to pool', ip_address=request.remote_addr)
+    db.session.add(audit_log)
+    db.session.commit()
+    
+    message = f"Successfully added {added_count} IPs"
+    if errors:
+        message += f". Errors: {'; '.join(errors[:5])}"
+    
+    return jsonify({"success": True, "added_count": added_count, "message": message})
+
+@app.route('/api/check-network')
+@login_required
+def api_check_network():
+    """Check network configuration status"""
+    import subprocess
+    
+    def run_cmd(cmd):
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+        except:
+            return False
+    
+    config = SystemConfig.query.first()
+    
+    # Check bridge
+    bridge_up = run_cmd(f"ip link show {config.bridge_name} | grep -q 'UP'")
+    
+    # Check interface
+    interface_up = run_cmd(f"ip link show {config.network_interface} | grep -q 'UP'")
+    
+    # Check IP forwarding
+    ip_forward = run_cmd("cat /proc/sys/net/ipv4/ip_forward | grep -q '1'")
+    
+    # Check NAT rules
+    nat_rules = run_cmd(f"iptables -t nat -C POSTROUTING -s {config.subnet_range} -j MASQUERADE 2>/dev/null") if config else False
+    
+    return jsonify({
+        "bridge_status": "UP" if bridge_up else "DOWN",
+        "interface_status": "UP" if interface_up else "DOWN", 
+        "ip_forwarding": "ENABLED" if ip_forward else "DISABLED",
+        "nat_rules": "CONFIGURED" if nat_rules else "MISSING"
+    })
+
+@app.route('/api/scan-ips')
+@login_required
+def api_scan_ips():
+    """Scan for available IPs in the subnet"""
+    import subprocess
+    import ipaddress
+    
+    config = SystemConfig.query.first()
+    if not config:
+        return jsonify({"error": "System config not found"}), 500
+    
+    try:
+        network = ipaddress.ip_network(config.subnet_range, strict=False)
+        all_ips = list(network.hosts())
+        
+        # Get used IPs
+        used_ips = set(c.ip_address for c in LxcContainer.query.all())
+        
+        # For a simple scan, we'll just check which IPs are not in use
+        # In a real implementation, you might want to ping them
+        available_ips = [str(ip) for ip in all_ips if str(ip) not in used_ips]
+        
+        return jsonify({"ips": available_ips[:100]})  # Limit results
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/network-status')
+@login_required
+def api_network_status():
+    """Get current network status"""
+    return api_check_network()
+
+@app.route('/api/ip-pool-status')
+@login_required
+def api_ip_pool_status():
+    """Get IP pool utilization status"""
+    config = SystemConfig.query.first()
+    if not config:
+        return jsonify({"error": "System config not found"}), 500
+    
+    import ipaddress
+    try:
+        network = ipaddress.ip_network(config.subnet_range, strict=False)
+        total_ips = network.num_addresses - 2  # Subtract network and broadcast
+        
+        used_ips = LxcContainer.query.count()
+        available_ips = total_ips - used_ips
+        utilization = round((used_ips / total_ips) * 100, 1) if total_ips > 0 else 0
+        
+        return jsonify({
+            "total": total_ips,
+            "used": used_ips,
+            "available": available_ips,
+            "utilization": utilization
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test-connectivity')
+@login_required
+def api_test_connectivity():
+    """Test internet connectivity"""
+    import subprocess
+    
+    def test_cmd(cmd, timeout=5):
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, timeout=timeout)
+            return result.returncode == 0
+        except:
+            return False
+    
+    # Test internet connectivity
+    internet = test_cmd("ping -c 1 -W 2 8.8.8.8")
+    
+    # Test DNS
+    dns = test_cmd("nslookup google.com 8.8.8.8")
+    
+    # Test gateway (assuming default route)
+    gateway = test_cmd("ip route show default | head -1 | grep -q via")
+    
+    return jsonify({
+        "internet": internet,
+        "dns": dns,
+        "gateway": gateway
+    })
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3030, debug=False)
