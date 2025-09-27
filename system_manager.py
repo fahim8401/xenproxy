@@ -1,12 +1,14 @@
 import subprocess
 import ipaddress
 import logging
+import psutil
+import netifaces
 from models import db, User
 
-# Configurable settings - can be updated via web UI
-SUBNET_RANGE = "203.0.113.0/24"  # RFC 5737 test range
-NETWORK_INTERFACE = "eth0"
-PROXY_BASE_PORT = 10000  # SOCKS5: 10000+, HTTP: 20000+
+# Configuration - Update these for your network
+SUBNET_RANGE = "192.168.1.0/24"  # Your subnet range
+NETWORK_INTERFACE = "eth0"       # Your network interface
+PROXY_BASE_PORT = 10000          # Base port for proxies
 
 logger = logging.getLogger(__name__)
 
@@ -161,3 +163,187 @@ def get_system_config():
         'network_interface': NETWORK_INTERFACE,
         'proxy_base_port': PROXY_BASE_PORT
     }
+
+def get_network_interfaces():
+    """Get list of available network interfaces."""
+    interfaces = []
+    try:
+        for iface in netifaces.interfaces():
+            addrs = netifaces.ifaddresses(iface)
+            interface_info = {
+                'name': iface,
+                'mac': None,
+                'ipv4': [],
+                'ipv6': []
+            }
+
+            # Get MAC address
+            if netifaces.AF_LINK in addrs:
+                interface_info['mac'] = addrs[netifaces.AF_LINK][0].get('addr')
+
+            # Get IPv4 addresses
+            if netifaces.AF_INET in addrs:
+                for addr in addrs[netifaces.AF_INET]:
+                    interface_info['ipv4'].append({
+                        'addr': addr.get('addr'),
+                        'netmask': addr.get('netmask'),
+                        'broadcast': addr.get('broadcast')
+                    })
+
+            # Get IPv6 addresses
+            if netifaces.AF_INET6 in addrs:
+                for addr in addrs[netifaces.AF_INET6]:
+                    interface_info['ipv6'].append({
+                        'addr': addr.get('addr'),
+                        'netmask': addr.get('netmask')
+                    })
+
+            interfaces.append(interface_info)
+    except Exception as e:
+        logger.error(f"Failed to get network interfaces: {e}")
+
+    return interfaces
+
+def get_assigned_ips():
+    """Get all IPs currently assigned to interfaces."""
+    assigned_ips = {}
+    try:
+        # Get IP addresses from all interfaces
+        for iface in netifaces.interfaces():
+            addrs = netifaces.ifaddresses(iface)
+            if netifaces.AF_INET in addrs:
+                for addr in addrs[netifaces.AF_INET]:
+                    ip = addr.get('addr')
+                    if ip:
+                        assigned_ips[ip] = {
+                            'interface': iface,
+                            'netmask': addr.get('netmask'),
+                            'broadcast': addr.get('broadcast')
+                        }
+    except Exception as e:
+        logger.error(f"Failed to get assigned IPs: {e}")
+
+    return assigned_ips
+
+def add_system_ip(ip, interface=None):
+    """Add IP address to system interface."""
+    target_interface = interface or NETWORK_INTERFACE
+
+    if not validate_ip_in_subnet(ip):
+        raise ValueError(f"IP {ip} is not in subnet {SUBNET_RANGE}")
+
+    # Check if IP is already assigned
+    assigned = get_assigned_ips()
+    if ip in assigned:
+        raise ValueError(f"IP {ip} is already assigned to {assigned[ip]['interface']}")
+
+    command = f"sudo ip addr add {ip}/24 dev {target_interface}"
+    run_command(command)
+    setup_nat_rule(ip)
+
+    logger.info(f"Added system IP {ip} to interface {target_interface}")
+    return True
+
+def remove_system_ip(ip):
+    """Remove IP address from system interface."""
+    assigned = get_assigned_ips()
+    if ip not in assigned:
+        raise ValueError(f"IP {ip} is not assigned to any interface")
+
+    interface = assigned[ip]['interface']
+    command = f"sudo ip addr del {ip}/24 dev {interface}"
+    run_command(command)
+    remove_nat_rule(ip)
+
+    logger.info(f"Removed system IP {ip} from interface {interface}")
+    return True
+
+def get_system_stats():
+    """Get real-time system statistics."""
+    try:
+        # CPU stats
+        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_count = psutil.cpu_count()
+        cpu_freq = psutil.cpu_freq()
+
+        # Memory stats
+        memory = psutil.virtual_memory()
+        memory_stats = {
+            'total': memory.total,
+            'available': memory.available,
+            'used': memory.used,
+            'percent': memory.percent
+        }
+
+        # Disk stats
+        disk = psutil.disk_usage('/')
+        disk_stats = {
+            'total': disk.total,
+            'used': disk.used,
+            'free': disk.free,
+            'percent': disk.percent
+        }
+
+        # Network stats
+        net_io = psutil.net_io_counters()
+        network_stats = {
+            'bytes_sent': net_io.bytes_sent,
+            'bytes_recv': net_io.bytes_recv,
+            'packets_sent': net_io.packets_sent,
+            'packets_recv': net_io.packets_recv,
+            'errin': net_io.errin,
+            'errout': net_io.errout,
+            'dropin': net_io.dropin,
+            'dropout': net_io.dropout
+        }
+
+        # System load
+        load_avg = psutil.getloadavg()
+
+        return {
+            'cpu': {
+                'percent': cpu_percent,
+                'count': cpu_count,
+                'freq_current': cpu_freq.current if cpu_freq else None,
+                'freq_max': cpu_freq.max if cpu_freq else None
+            },
+            'memory': memory_stats,
+            'disk': disk_stats,
+            'network': network_stats,
+            'load_avg': load_avg,
+            'uptime': psutil.boot_time()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get system stats: {e}")
+        return {}
+
+def get_network_traffic():
+    """Get network traffic statistics."""
+    try:
+        # Get stats for all interfaces
+        interfaces = {}
+        net_stats = psutil.net_if_stats()
+        net_io = psutil.net_if_io_counters(pernic=True)
+
+        for iface, stats in net_stats.items():
+            if iface in net_io:
+                io_stats = net_io[iface]
+                interfaces[iface] = {
+                    'isup': stats.isup,
+                    'duplex': stats.duplex,
+                    'speed': stats.speed,
+                    'mtu': stats.mtu,
+                    'bytes_sent': io_stats.bytes_sent,
+                    'bytes_recv': io_stats.bytes_recv,
+                    'packets_sent': io_stats.packets_sent,
+                    'packets_recv': io_stats.packets_recv,
+                    'errin': io_stats.errin,
+                    'errout': io_stats.errout,
+                    'dropin': io_stats.dropin,
+                    'dropout': io_stats.dropout
+                }
+
+        return interfaces
+    except Exception as e:
+        logger.error(f"Failed to get network traffic: {e}")
+        return {}

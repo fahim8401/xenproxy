@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize dashboard functionality
     initializeDashboard();
     initializeUserDetail();
+    initializeNetworkInterfaces();
+    initializeIPManagement();
+    initializeSystemMonitoring();
 });
 
 // Dashboard Functions
@@ -430,6 +433,322 @@ function validatePassword(password) {
 
 function validateIP(ip) {
     return /^(\d{1,3}\.){3}\d{1,3}$/.test(ip);
+}
+
+// Network Interfaces Functions
+function initializeNetworkInterfaces() {
+    const refreshBtn = document.getElementById('refreshInterfaces');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadNetworkInterfaces);
+        // Load interfaces on page load
+        loadNetworkInterfaces();
+    }
+}
+
+function loadNetworkInterfaces() {
+    const container = document.getElementById('interfacesContainer');
+    const refreshBtn = document.getElementById('refreshInterfaces');
+
+    if (!container) return;
+
+    setLoading(refreshBtn, true);
+
+    fetch('/api/system/interfaces')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+                return;
+            }
+
+            renderNetworkInterfaces(data.interfaces);
+        })
+        .catch(error => {
+            console.error('Error loading interfaces:', error);
+            showToast('Failed to load network interfaces', 'error');
+        })
+        .finally(() => {
+            setLoading(refreshBtn, false);
+        });
+}
+
+function renderNetworkInterfaces(interfaces) {
+    const container = document.getElementById('interfacesContainer');
+
+    if (!interfaces || interfaces.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center text-gray-500">No network interfaces found</div>';
+        return;
+    }
+
+    container.innerHTML = interfaces.map(iface => `
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-2">
+                <h4 class="font-semibold text-gray-900">${iface.name}</h4>
+                <span class="text-sm ${iface.ipv4.length > 0 ? 'text-green-600' : 'text-gray-400'}">
+                    ${iface.ipv4.length > 0 ? '🟢' : '🔴'} ${iface.ipv4.length > 0 ? 'Up' : 'Down'}
+                </span>
+            </div>
+            ${iface.mac ? `<p class="text-xs text-gray-600 mb-2">MAC: ${iface.mac}</p>` : ''}
+            <div class="space-y-1">
+                ${iface.ipv4.map(ip => `
+                    <div class="text-sm">
+                        <span class="font-mono bg-blue-100 px-2 py-1 rounded">${ip.addr}</span>
+                        <span class="text-gray-500">/${ip.netmask}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+// IP Management Functions
+function initializeIPManagement() {
+    const refreshBtn = document.getElementById('refreshIPs');
+    const addBtn = document.getElementById('addIPBtn');
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadIPManagement);
+    }
+
+    if (addBtn) {
+        addBtn.addEventListener('click', showAddIPModal);
+    }
+
+    // Load IP management on page load
+    loadIPManagement();
+}
+
+function loadIPManagement() {
+    const refreshBtn = document.getElementById('refreshIPs');
+
+    setLoading(refreshBtn, true);
+
+    // Load both assigned and available IPs
+    Promise.all([
+        fetch('/api/system/assigned-ips').then(r => r.json()),
+        fetch('/api/system/available-ips').then(r => r.json())
+    ])
+    .then(([assignedData, availableData]) => {
+        if (assignedData.error) {
+            showToast(assignedData.error, 'error');
+            return;
+        }
+        if (availableData.error) {
+            showToast(availableData.error, 'error');
+            return;
+        }
+
+        renderAssignedIPs(assignedData.assigned_ips);
+        renderAvailableIPs(availableData.available_ips);
+    })
+    .catch(error => {
+        console.error('Error loading IP management:', error);
+        showToast('Failed to load IP management', 'error');
+    })
+    .finally(() => {
+        setLoading(refreshBtn, false);
+    });
+}
+
+function renderAssignedIPs(assignedIPs) {
+    const container = document.getElementById('assignedIPsContainer');
+
+    if (!assignedIPs || Object.keys(assignedIPs).length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center text-gray-500">No assigned IPs</div>';
+        return;
+    }
+
+    container.innerHTML = Object.entries(assignedIPs).map(([ip, info]) => `
+        <div class="bg-green-100 border border-green-300 px-3 py-2 rounded flex justify-between items-center">
+            <div>
+                <span class="font-mono font-semibold">${ip}</span>
+                <span class="text-sm text-gray-600 ml-2">(${info.interface})</span>
+            </div>
+            <button class="text-red-600 hover:text-red-800 text-sm remove-ip-btn" data-ip="${ip}">
+                ✕
+            </button>
+        </div>
+    `).join('');
+
+    // Add event listeners for remove buttons
+    document.querySelectorAll('.remove-ip-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const ip = this.getAttribute('data-ip');
+            removeSystemIP(ip);
+        });
+    });
+}
+
+function renderAvailableIPs(availableIPs) {
+    const container = document.getElementById('availableIPsContainer');
+
+    if (!availableIPs || availableIPs.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500">No available IPs</div>';
+        return;
+    }
+
+    container.innerHTML = availableIPs.map(ip => `
+        <div class="bg-gray-100 px-3 py-2 rounded text-sm">${ip}</div>
+    `).join('');
+}
+
+function showAddIPModal() {
+    const ip = prompt('Enter IP address to add (e.g., 192.168.1.100):');
+    if (!ip) return;
+
+    const interface = prompt('Enter network interface (leave empty for default):') || '';
+
+    addSystemIP(ip.trim(), interface.trim());
+}
+
+function addSystemIP(ip, interface) {
+    fetch('/api/system/ips', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ip, interface })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            showToast(data.message, 'success');
+            loadIPManagement(); // Refresh the display
+        }
+    })
+    .catch(error => {
+        console.error('Error adding IP:', error);
+        showToast('Failed to add IP', 'error');
+    });
+}
+
+function removeSystemIP(ip) {
+    if (!confirm(`Are you sure you want to remove IP ${ip} from the system?`)) {
+        return;
+    }
+
+    fetch(`/api/system/ips/${ip}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            showToast(data.message, 'success');
+            loadIPManagement(); // Refresh the display
+        }
+    })
+    .catch(error => {
+        console.error('Error removing IP:', error);
+        showToast('Failed to remove IP', 'error');
+    });
+}
+
+// System Monitoring Functions
+function initializeSystemMonitoring() {
+    const refreshBtn = document.getElementById('refreshStats');
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadSystemStats);
+    }
+
+    // Load stats immediately and then every 30 seconds
+    loadSystemStats();
+    setInterval(loadSystemStats, 30000);
+}
+
+function loadSystemStats() {
+    const lastUpdate = document.getElementById('lastUpdate');
+
+    fetch('/api/system/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+                return;
+            }
+
+            updateSystemStats(data.stats);
+            if (lastUpdate) {
+                lastUpdate.textContent = new Date().toLocaleTimeString();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading system stats:', error);
+            if (lastUpdate) {
+                lastUpdate.textContent = 'Error loading stats';
+            }
+        });
+}
+
+function updateSystemStats(stats) {
+    if (!stats) return;
+
+    // Update CPU
+    const cpuPercent = stats.cpu ? stats.cpu.percent : 0;
+    document.getElementById('cpuPercent').textContent = `${Math.round(cpuPercent)}%`;
+    document.getElementById('cpuDetails').textContent = `${stats.cpu ? stats.cpu.count : 0} cores`;
+
+    // Update CPU arc
+    const cpuArc = document.getElementById('cpuArc');
+    if (cpuArc) {
+        const circumference = 2 * Math.PI * 15.9155;
+        const dashArray = (cpuPercent / 100) * circumference;
+        cpuArc.setAttribute('stroke-dasharray', `${dashArray},${circumference}`);
+    }
+
+    // Update Memory
+    const memoryPercent = stats.memory ? stats.memory.percent : 0;
+    const memoryUsed = stats.memory ? (stats.memory.used / (1024**3)).toFixed(1) : 0;
+    const memoryTotal = stats.memory ? (stats.memory.total / (1024**3)).toFixed(1) : 0;
+
+    document.getElementById('memoryPercent').textContent = `${Math.round(memoryPercent)}%`;
+    document.getElementById('memoryDetails').textContent = `${memoryUsed}/${memoryTotal} GB`;
+
+    // Update Memory arc
+    const memoryArc = document.getElementById('memoryArc');
+    if (memoryArc) {
+        const circumference = 2 * Math.PI * 15.9155;
+        const dashArray = (memoryPercent / 100) * circumference;
+        memoryArc.setAttribute('stroke-dasharray', `${dashArray},${circumference}`);
+    }
+
+    // Update Disk
+    const diskPercent = stats.disk ? stats.disk.percent : 0;
+    const diskUsed = stats.disk ? (stats.disk.used / (1024**3)).toFixed(1) : 0;
+    const diskTotal = stats.disk ? (stats.disk.total / (1024**3)).toFixed(1) : 0;
+
+    document.getElementById('diskPercent').textContent = `${Math.round(diskPercent)}%`;
+    document.getElementById('diskDetails').textContent = `${diskUsed}/${diskTotal} GB`;
+
+    // Update Disk arc
+    const diskArc = document.getElementById('diskArc');
+    if (diskArc) {
+        const circumference = 2 * Math.PI * 15.9155;
+        const dashArray = (diskPercent / 100) * circumference;
+        diskArc.setAttribute('stroke-dasharray', `${dashArray},${circumference}`);
+    }
+
+    // Update Network
+    const networkBytesRecv = stats.network ? (stats.network.bytes_recv / (1024**2)).toFixed(1) : 0;
+    const networkBytesSent = stats.network ? (stats.network.bytes_sent / (1024**2)).toFixed(1) : 0;
+
+    document.getElementById('networkDetails').textContent = `${networkBytesRecv} MB in, ${networkBytesSent} MB out`;
+
+    // Update additional stats
+    document.getElementById('activeUsers').textContent = stats.active_users || 0;
+    document.getElementById('totalUsers').textContent = stats.total_users || 0;
+    document.getElementById('runningContainers').textContent = stats.running_containers || 0;
+
+    // Update uptime
+    if (stats.uptime) {
+        const uptimeSeconds = Date.now() / 1000 - stats.uptime;
+        const days = Math.floor(uptimeSeconds / 86400);
+        document.getElementById('uptime').textContent = `${days}d`;
+    }
 }
 
 // Initialize toggle switches

@@ -161,6 +161,8 @@ install_python_dependencies() {
     # Install requirements
     if [[ -f "$APP_DIR/requirements.txt" ]]; then
         python3 -m pip install --user -r "$APP_DIR/requirements.txt"
+        # Install netifaces separately if needed (may require system packages)
+        python3 -m pip install --user netifaces || warning "netifaces installation failed - may need system dependencies"
     else
         error "requirements.txt not found in $APP_DIR"
         exit 1

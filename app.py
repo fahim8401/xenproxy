@@ -14,7 +14,9 @@ from system_manager import (
     create_linux_user, delete_linux_user,
     get_available_ips, apply_all_system_rules,
     update_system_config, get_system_config,
-    validate_ip_in_subnet
+    validate_ip_in_subnet, get_network_interfaces,
+    get_assigned_ips, add_system_ip, remove_system_ip,
+    get_system_stats, get_network_traffic
 )
 from proxy_manager import start_user_proxies, stop_user_proxies, get_user_proxy_ports, get_user_proxy_status
 from pptp_manager import add_pptp_user, remove_pptp_user, reload_pptpd
@@ -359,6 +361,94 @@ def get_available_ips_api():
         return jsonify({'available_ips': available_ips})
     except Exception as e:
         logger.error(f"Error getting available IPs: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/system/interfaces', methods=['GET'])
+@login_required
+def get_network_interfaces_api():
+    """Get network interfaces information."""
+    try:
+        interfaces = get_network_interfaces()
+        return jsonify({'interfaces': interfaces})
+    except Exception as e:
+        logger.error(f"Error getting network interfaces: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/system/assigned-ips', methods=['GET'])
+@login_required
+def get_assigned_ips_api():
+    """Get all assigned IPs."""
+    try:
+        assigned_ips = get_assigned_ips()
+        return jsonify({'assigned_ips': assigned_ips})
+    except Exception as e:
+        logger.error(f"Error getting assigned IPs: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/system/ips', methods=['POST'])
+@login_required
+def add_system_ip_api():
+    """Add IP address to system interface."""
+    try:
+        data = request.get_json()
+        ip = data.get('ip', '').strip()
+        interface = data.get('interface', '')
+
+        if not validate_ip(ip):
+            return jsonify({'error': 'Invalid IP address format'}), 400
+
+        add_system_ip(ip, interface or None)
+
+        log_admin_action('ip_added', 'system', None, f'Added system IP {ip} to interface {interface or "default"}')
+        logger.info(f"Added system IP {ip}")
+        return jsonify({'message': f'IP {ip} added successfully'})
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error adding system IP: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/system/ips/<ip>', methods=['DELETE'])
+@login_required
+def remove_system_ip_api(ip):
+    """Remove IP address from system interface."""
+    try:
+        if not validate_ip(ip):
+            return jsonify({'error': 'Invalid IP address format'}), 400
+
+        remove_system_ip(ip)
+
+        log_admin_action('ip_removed', 'system', None, f'Removed system IP {ip}')
+        logger.info(f"Removed system IP {ip}")
+        return jsonify({'message': f'IP {ip} removed successfully'})
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error removing system IP {ip}: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/system/stats', methods=['GET'])
+@login_required
+def get_system_stats_api():
+    """Get real-time system statistics."""
+    try:
+        stats = get_system_stats()
+        return jsonify({'stats': stats})
+    except Exception as e:
+        logger.error(f"Error getting system stats: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/system/traffic', methods=['GET'])
+@login_required
+def get_network_traffic_api():
+    """Get network traffic statistics."""
+    try:
+        traffic = get_network_traffic()
+        return jsonify({'traffic': traffic})
+    except Exception as e:
+        logger.error(f"Error getting network traffic: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/user/<int:user_id>')
