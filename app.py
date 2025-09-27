@@ -175,6 +175,7 @@ def create_container_page():
         data = request.form
         username = data['username']
         ip_address = data['ip_address']
+        template_id = data.get('template_id')
         auth_method = data.get('auth_method', 'ssh')
         ssh_key = data.get('ssh_public_key', '')
         password = data.get('password', '')
@@ -193,17 +194,19 @@ def create_container_page():
             "http": 'enable_http' in data,
             "wireguard": 'enable_wireguard' in data,
         }
-        create_container(username, ip_address, ssh_key, password, auth_method, protocols)
+        create_container(username, ip_address, ssh_key, protocols, password, auth_method, template_id)
         
         # Log the container creation
-        audit_log = AuditLog(admin_id=session['admin_id'], action='create_container', details=f'Created {username}', ip_address=request.remote_addr)
+        audit_log = AuditLog(admin_id=session['admin_id'], action='create_container', details=f'Created {username} with template {template_id}', ip_address=request.remote_addr)
         db.session.add(audit_log)
         db.session.commit()
         
         flash('Container created successfully', 'success')
         return redirect(url_for('containers'))
     
-    return render_template('create_container.html')
+    # Get available templates for the form
+    templates = LxcTemplate.query.order_by(LxcTemplate.name).all()
+    return render_template('create_container.html', templates=templates)
 
 @app.route('/containers/<name>/edit', methods=['GET', 'POST'])
 @login_required

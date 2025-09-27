@@ -1,7 +1,7 @@
 import os
 import subprocess
 import logging
-from models import LxcContainer, db, SystemConfig
+from models import LxcContainer, db, SystemConfig, LxcTemplate
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -18,18 +18,28 @@ def run_command(cmd, check=True):
         raise RuntimeError(result.stderr)
     return result.stdout.strip()
 
-def create_container(username, ip_address, ssh_key, protocols, password=None, auth_method='ssh'):
+def create_container(username, ip_address, ssh_key, protocols, password=None, auth_method='ssh', template_id=None):
     """Create and configure a new unprivileged LXC container."""
     container_name = f"ipgw-{username}"
     config = SystemConfig.query.first()
     if not config:
         raise RuntimeError("SystemConfig not set")
-
+    
+    # Get template (use default if none specified)
+    if template_id:
+        template = LxcTemplate.query.get(template_id)
+        if not template:
+            raise RuntimeError(f"Template with ID {template_id} not found")
+    else:
+        template = LxcTemplate.query.filter_by(is_default=True).first()
+        if not template:
+            raise RuntimeError("No default template found")
+    
     # Prepare LXC config
     lxc_config_path = f"{LXC_BASE_PATH}/{container_name}/config"
     os.makedirs(f"{LXC_BASE_PATH}/{container_name}", exist_ok=True)
-    with open(ALPINE_TEMPLATE, "r") as tpl:
-        lxc_config = tpl.read()
+    
+    lxc_config = template.config_content
     lxc_config = lxc_config.replace("{{container_name}}", container_name)
     lxc_config = lxc_config.replace("{{username}}", username)
     lxc_config = lxc_config.replace("{{bridge_name}}", config.bridge_name)

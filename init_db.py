@@ -6,7 +6,7 @@ This script ensures the database is properly initialized with default settings
 import os
 import sys
 from flask import Flask
-from models import db, SystemConfig, Admin
+from models import db, SystemConfig, Admin, LxcTemplate
 from auth import create_admin
 from migrate_password import migrate
 
@@ -60,6 +60,29 @@ def init_database():
             print("✓ Default SystemConfig created")
         else:
             print("✓ SystemConfig already exists")
+        
+        # Create default LXC template if none exists
+        if not LxcTemplate.query.first():
+            print("Creating default LXC template...")
+            try:
+                # Read the default template from file
+                template_path = os.path.join(os.path.dirname(__file__), 'lxc-templates', 'alpine-config')
+                with open(template_path, 'r') as f:
+                    default_config = f.read()
+                
+                default_template = LxcTemplate(
+                    name='Alpine Linux',
+                    description='Default Alpine Linux LXC template with basic networking configuration',
+                    config_content=default_config,
+                    is_default=True
+                )
+                db.session.add(default_template)
+                db.session.commit()
+                print("✓ Default LXC template created")
+            except Exception as e:
+                print(f"✗ Failed to create default template: {e}")
+        else:
+            print("✓ LXC templates already exist")
         
         # Create default admin if none exists
         if not Admin.query.first():

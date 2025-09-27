@@ -24,6 +24,9 @@
                 <a href="{{ url_for('containers') }}" class="sidebar-link {% if request.endpoint == 'containers' %}sidebar-active{% endif %}">
                     <span class="mr-3">🖥️</span> Containers
                 </a>
+                <a href="{{ url_for('templates') }}" class="sidebar-link {% if request.endpoint == 'templates' %}sidebar-active{% endif %}">
+                    <span class="mr-3">📋</span> Templates
+                </a>
                 <a href="{{ url_for('logs') }}" class="sidebar-link {% if request.endpoint == 'logs' %}sidebar-active{% endif %}">
                     <span class="mr-3">📋</span> Audit Logs
                 </a>
