@@ -13,6 +13,7 @@ A production-ready Python Flask application for managing a secure, multi-protoco
 - **System Management:** Linux bridge, NAT, auto IP assignment, PostgreSQL backend.
 - **Fully Automated Install:** Use `install.sh` for A-Z setup (system deps, DB, LXC, templates, static, DB init).
 - **Root-Compatible:** Works on both Ubuntu and AlmaLinux as root (or with sudo).
+- **Systemd Service:** Start/stop/restart with `systemctl` for production.
 
 ---
 
@@ -44,6 +45,8 @@ templates/
     users.html
     system_settings.html
     logs.html
+service/
+    xenproxy.service
 ```
 
 ---
@@ -68,14 +71,25 @@ templates/
       ```
     - Then re-run `sudo ./install.sh` to continue.
 
-3. **Run the app:**
+3. **Run the app manually:**
     ```bash
     source venv/bin/activate
     export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
     python app.py
     ```
 
-4. **Access the admin panel:**  
+4. **(Recommended) Run as a systemd service:**
+    ```bash
+    sudo cp service/xenproxy.service /etc/systemd/system/xenproxy.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable xenproxy
+    sudo systemctl start xenproxy
+    # To stop: sudo systemctl stop xenproxy
+    # To restart: sudo systemctl restart xenproxy
+    # To check status: sudo systemctl status xenproxy
+    ```
+
+5. **Access the admin panel:**  
    [http://localhost:3030](http://localhost:3030)
 
 ---
