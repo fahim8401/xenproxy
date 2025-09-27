@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Create New Container{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="flex items-center mb-6">
+    <a href="{{ url_for('containers') }}" class="btn mr-4">← Back to Containers</a>
+    <h2 class="text-2xl font-bold">Create New Container</h2>
+  </div>
+
+  <div class="bg-white p-6 rounded-lg shadow">
+    <form action="{{ url_for('create_container_page') }}" method="post" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+          <input type="text" name="username" class="w-full border border-gray-300 rounded px-3 py-2" required>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">IP Address</label>
+          <input type="text" name="ip_address" class="w-full border border-gray-300 rounded px-3 py-2" required placeholder="e.g. 172.16.100.10">
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">SSH Public Key</label>
+        <textarea name="ssh_public_key" class="w-full border border-gray-300 rounded px-3 py-2" rows="3" required placeholder="Paste your SSH public key here"></textarea>
+      </div>
+      
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Enabled Protocols</label>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <label class="flex items-center">
+            <input type="checkbox" name="enable_ssh" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <span class="ml-2 text-sm">🔒 SSH</span>
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="enable_socks5" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <span class="ml-2 text-sm">🧦 SOCKS5</span>
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="enable_http" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <span class="ml-2 text-sm">🌐 HTTP</span>
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="enable_wireguard" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <span class="ml-2 text-sm">🛡️ WireGuard</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-4">
+        <a href="{{ url_for('containers') }}" class="btn bg-gray-300 text-gray-800">Cancel</a>
+        <button type="submit" class="btn bg-green-600 hover:bg-green-700">Create Container</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

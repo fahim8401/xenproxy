@@ -2,7 +2,10 @@
 {% block title %}Container Detail{% endblock %}
 {% block content %}
 <div class="container max-w-3xl mx-auto">
-  <h2 class="text-2xl font-bold mb-4">Container: {{ container.container_name }}</h2>
+  <div class="flex items-center mb-6">
+    <a href="{{ url_for('containers') }}" class="btn mr-4">← Back to Containers</a>
+    <h2 class="text-2xl font-bold">Container: {{ container.container_name }}</h2>
+  </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-4">
       <div class="mb-2 flex flex-wrap gap-2">
@@ -90,6 +93,7 @@
     </div>
   </div>
   <div class="flex flex-wrap gap-2 mb-4">
+    <a href="{{ url_for('edit_container_page', name=container.container_name) }}" class="btn bg-blue-600 hover:bg-blue-700">Edit</a>
     <form action="{{ url_for('start_container_route', name=container.container_name) }}" method="post" class="inline">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn" type="submit">Start</button>

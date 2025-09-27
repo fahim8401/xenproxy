@@ -9,44 +9,6 @@
       <button class="btn bg-green-600 hover:bg-green-700" id="create-container-btn">+ Create New Container</button>
     </div>
   </div>
-
-  <!-- Create Container Modal -->
-  <div id="create-container-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
-      <button id="close-create-modal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">&times;</button>
-      <h3 class="text-xl font-bold mb-4">Create New Container</h3>
-      <form id="create-container-form" action="{{ url_for('create_container_route') }}" method="post" autocomplete="off">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="mb-3">
-          <label class="block font-semibold mb-1">Username</label>
-          <input type="text" name="username" class="w-full border rounded px-3 py-2" required>
-        </div>
-        <div class="mb-3">
-          <label class="block font-semibold mb-1">IP Address</label>
-          <input type="text" name="ip_address" class="w-full border rounded px-3 py-2" required placeholder="e.g. 172.16.100.10">
-        </div>
-        <div class="mb-3">
-          <label class="block font-semibold mb-1">SSH Public Key</label>
-          <textarea name="ssh_public_key" class="w-full border rounded px-3 py-2" rows="2" required></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="block font-semibold mb-1">Protocols</label>
-          <div class="flex gap-4 flex-wrap">
-            <label><input type="checkbox" name="enable_ssh"> SSH</label>
-            <label><input type="checkbox" name="enable_socks5"> SOCKS5</label>
-            <label><input type="checkbox" name="enable_http"> HTTP</label>
-            <label><input type="checkbox" name="enable_wireguard"> WireGuard</label>
-          </div>
-        </div>
-        <div class="flex justify-end gap-2 mt-4">
-          <button type="button" id="cancel-create-modal" class="btn bg-gray-300 text-gray-800">Cancel</button>
-          <button type="submit" class="btn bg-green-600 hover:bg-green-700">Create</button>
-        </div>
-      </form>
-    </div>
-  </div>
-    </div>
-  </div>
   <div class="search-filter bg-gray-50 p-3 rounded mb-4 flex flex-col md:flex-row gap-2 md:gap-4">
     <input type="text" id="search" placeholder="Search by username or IP" class="flex-1 border border-gray-300 rounded px-3 py-2">
     <select id="status-filter" class="border border-gray-300 rounded px-3 py-2">
@@ -112,6 +74,7 @@
             </td>
             <td class="px-4 py-2 space-x-1">
               <a href="{{ url_for('container_detail', name=c.container_name) }}" class="btn btn-small">View</a>
+              <a href="{{ url_for('edit_container_page', name=c.container_name) }}" class="btn btn-small bg-blue-600 hover:bg-blue-700">Edit</a>
               <form action="{{ url_for('start_container_route', name=c.container_name) }}" method="post" class="inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="btn btn-small" type="submit">Start</button>

@@ -39,6 +39,11 @@ app.config['WTF_CSRF_SSL_STRICT'] = False  # Allow over HTTP in development
 
 db.init_app(app)
 csrf = CSRFProtect(app)
+
+@app.context_processor
+def inject_now():
+    return {'now': datetime.now}
+
 # Limiter removed for compatibility
 
 def initialize_application():
@@ -142,6 +147,13 @@ def dashboard():
     system_config = SystemConfig.query.first()
     return render_template('dashboard.html', containers=containers, host_stats=host_stats, system_config=system_config)
 
+@app.route('/api/system-stats')
+@login_required
+def system_stats():
+    stats = get_host_resources()
+    running_containers = LxcContainer.query.filter_by(status='running').count()
+    return render_template('system_stats.html', stats=stats, running_containers=running_containers)
+
 @app.route('/containers')
 @login_required
 def containers():
@@ -178,6 +190,62 @@ def create_container_route():
     
     flash('Container created', 'success')
     return redirect(url_for('containers'))
+
+@app.route('/containers/create', methods=['GET', 'POST'])
+@login_required
+def create_container_page():
+    if request.method == 'POST':
+        data = request.form
+        username = data['username']
+        ip_address = data['ip_address']
+        ssh_key = data['ssh_public_key']
+        protocols = {
+            "ssh": 'enable_ssh' in data,
+            "socks5": 'enable_socks5' in data,
+            "http": 'enable_http' in data,
+            "wireguard": 'enable_wireguard' in data,
+        }
+        create_container(username, ip_address, ssh_key, protocols)
+        
+        # Log the container creation
+        audit_log = AuditLog(admin_id=session['admin_id'], action='create_container', details=f'Created {username}', ip_address=request.remote_addr)
+        db.session.add(audit_log)
+        db.session.commit()
+        
+        flash('Container created successfully', 'success')
+        return redirect(url_for('containers'))
+    
+    return render_template('create_container.html')
+
+@app.route('/containers/<name>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_container_page(name):
+    container = LxcContainer.query.filter_by(container_name=name).first_or_404()
+    
+    if request.method == 'POST':
+        data = request.form
+        container.username = data['username']
+        container.ip_address = data['ip_address']
+        container.ssh_public_key = data['ssh_public_key']
+        container.enable_ssh = 'enable_ssh' in data
+        container.enable_socks5 = 'enable_socks5' in data
+        container.enable_http = 'enable_http' in data
+        container.enable_wireguard = 'enable_wireguard' in data
+        container.cpu_limit = float(data['cpu_limit'])
+        container.memory_limit = int(data['memory_limit']) * 1024 * 1024  # Convert MB to bytes
+        container.disk_limit = int(data['disk_limit']) * 1024 * 1024 * 1024  # Convert GB to bytes
+        
+        db.session.commit()
+        
+        # Log the container edit
+        audit_log = AuditLog(admin_id=session['admin_id'], action='edit_container', details=f'Edited {name}', ip_address=request.remote_addr)
+        db.session.add(audit_log)
+        db.session.commit()
+        
+        flash('Container updated successfully', 'success')
+        return redirect(url_for('container_detail', name=name))
+    
+    return render_template('edit_container.html', container=container)
 
 @app.route('/containers/<name>/delete', methods=['POST'])
 @login_required

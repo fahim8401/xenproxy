@@ -4,15 +4,37 @@
 
 {% block content %}
 <!-- System Overview -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8"
+     hx-get="/api/system-stats"
+     hx-trigger="load, every 5s"
+     hx-target="this"
+     hx-swap="innerHTML">
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="p-2 bg-red-100 rounded-lg">
+                <span class="text-2xl">🖥️</span>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">CPU Usage</p>
+                <p class="text-lg font-semibold text-gray-900">{{ host_stats.cpu_percent }}%</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div class="bg-red-500 h-2 rounded-full" style="width: {{ host_stats.cpu_percent }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="bg-white p-6 rounded-lg shadow">
         <div class="flex items-center">
             <div class="p-2 bg-blue-100 rounded-lg">
-                <span class="text-2xl">🌐</span>
+                <span class="text-2xl">�</span>
             </div>
             <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Subnet Range</p>
-                <p class="text-lg font-semibold text-gray-900">{{ system_config.subnet_range }}</p>
+                <p class="text-sm font-medium text-gray-600">Memory Usage</p>
+                <p class="text-lg font-semibold text-gray-900">{{ host_stats.memory_percent }}%</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: {{ host_stats.memory_percent }}%"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -20,55 +42,14 @@
     <div class="bg-white p-6 rounded-lg shadow">
         <div class="flex items-center">
             <div class="p-2 bg-green-100 rounded-lg">
-                <span class="text-2xl">🔌</span>
+                <span class="text-2xl">�</span>
             </div>
             <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Network Interface</p>
-                <p class="text-lg font-semibold text-gray-900">{{ system_config.network_interface }}</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-lg shadow">
-        <div class="flex items-center">
-            <div class="p-2 bg-blue-100 rounded-lg">
-                <span class="text-2xl">🌐</span>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Gateway IP</p>
-                <p class="text-lg font-semibold text-gray-900">{{ system_config.gateway_ip or 'Not detected' }}</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-lg shadow">
-        <div class="flex items-center">
-            <div class="p-2 bg-purple-100 rounded-lg">
-                <span class="text-2xl">📡</span>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">DNS Servers</p>
-                <p class="text-lg font-semibold text-gray-900">
-                    {% if system_config.dns_servers %}
-                        {% for dns in system_config.dns_servers %}
-                            {{ dns }}{% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        Not configured
-                    {% endif %}
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-lg shadow">
-        <div class="flex items-center">
-            <div class="p-2 bg-purple-100 rounded-lg">
-                <span class="text-2xl">👥</span>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Total Users</p>
-                <p class="text-lg font-semibold text-gray-900">{{ total_users }}</p>
+                <p class="text-sm font-medium text-gray-600">Disk Usage</p>
+                <p class="text-lg font-semibold text-gray-900">{{ host_stats.disk_percent }}%</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ host_stats.disk_percent }}%"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -79,348 +60,52 @@
                 <span class="text-2xl">✅</span>
             </div>
             <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Active Users</p>
-                <p class="text-lg font-semibold text-gray-900">{{ active_users }}</p>
+                <p class="text-sm font-medium text-gray-600">Running Containers</p>
+                <p class="text-lg font-semibold text-gray-900">{{ containers|selectattr('status', 'equalto', 'running')|list|length }}</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Access Panel -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-    <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <div class="flex items-center">
-            <div class="p-3 bg-blue-100 rounded-lg">
-                <span class="text-2xl">📋</span>
-            </div>
-            <div class="ml-4">
-                <h4 class="text-lg font-semibold text-gray-900">Audit Logs</h4>
-                <p class="text-sm text-gray-600">View admin activity logs</p>
-            </div>
-        </div>
-    </a>
-
-    <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <div class="flex items-center">
-            <div class="p-3 bg-green-100 rounded-lg">
-                <span class="text-2xl">📈</span>
-            </div>
-            <div class="ml-4">
-                <h4 class="text-lg font-semibold text-gray-900">System Health</h4>
-                <p class="text-sm text-gray-600">Monitor system performance</p>
-            </div>
-        </div>
-    </a>
-
-    <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <div class="flex items-center">
-            <div class="p-3 bg-purple-100 rounded-lg">
-                <span class="text-2xl">👥</span>
-            </div>
-            <div class="ml-4">
-                <h4 class="text-lg font-semibold text-gray-900">Bulk Operations</h4>
-                <p class="text-sm text-gray-600">Import/export users via CSV</p>
-            </div>
-        </div>
-    </a>
-</div>
-
-<!-- Network Interfaces -->
-<div class="bg-white p-6 rounded-lg shadow mb-8 overflow-x-auto">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Network Interfaces</h3>
-        <button id="refreshInterfaces" class="text-blue-600 hover:text-blue-800 text-sm">
-            🔄 Refresh
-        </button>
-    </div>
-    <div id="interfacesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Interfaces will be loaded here -->
-    </div>
-</div>
-
-<!-- IP Management -->
-<div class="bg-white p-6 rounded-lg shadow mb-8 overflow-x-auto">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">IP Address Management</h3>
-        <div class="flex space-x-2">
-            <button id="refreshIPs" class="text-blue-600 hover:text-blue-800 text-sm">
-                🔄 Refresh
-            </button>
-            <button id="addIPBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
-                + Add IP
-            </button>
-        </div>
-    </div>
-
-    <div id="ipManagementContainer">
-        <div class="mb-4">
-            <h4 class="text-md font-medium mb-2">Assigned IPs</h4>
-            <div id="assignedIPsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                <!-- Assigned IPs will be loaded here -->
-            </div>
-        </div>
-
-        <div>
-            <h4 class="text-md font-medium mb-2">Available IPs ({{ available_ips|length }})</h4>
-            <div id="availableIPsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 max-h-32 overflow-y-auto">
-                {% for ip in available_ips %}
-                <div class="bg-gray-100 px-3 py-2 rounded text-sm">{{ ip }}</div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Live System Monitoring -->
-<div class="bg-white p-6 rounded-lg shadow mb-8 overflow-x-auto">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Live System Monitoring</h3>
-        <div class="flex items-center space-x-2">
-            <span id="lastUpdate" class="text-sm text-gray-500">Loading...</span>
-            <button id="refreshStats" class="text-blue-600 hover:text-blue-800 text-sm">
-                🔄 Refresh
-            </button>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <!-- CPU Usage -->
-        <div class="text-center">
-            <div class="relative w-24 h-24 mx-auto mb-2">
-                <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none" stroke="#e5e7eb" stroke-width="2"/>
-                    <path id="cpuArc" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="0,100"/>
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span id="cpuPercent" class="text-lg font-semibold">0%</span>
-                </div>
-            </div>
-            <p class="text-sm text-gray-600">CPU Usage</p>
-            <p id="cpuDetails" class="text-xs text-gray-500">0 cores</p>
-        </div>
-
-        <!-- Memory Usage -->
-        <div class="text-center">
-            <div class="relative w-24 h-24 mx-auto mb-2">
-                <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none" stroke="#e5e7eb" stroke-width="2"/>
-                    <path id="memoryArc" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="0,100"/>
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span id="memoryPercent" class="text-lg font-semibold">0%</span>
-                </div>
-            </div>
-            <p class="text-sm text-gray-600">Memory Usage</p>
-            <p id="memoryDetails" class="text-xs text-gray-500">0/0 GB</p>
-        </div>
-
-        <!-- Disk Usage -->
-        <div class="text-center">
-            <div class="relative w-24 h-24 mx-auto mb-2">
-                <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none" stroke="#e5e7eb" stroke-width="2"/>
-                    <path id="diskArc" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="0,100"/>
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span id="diskPercent" class="text-lg font-semibold">0%</span>
-                </div>
-            </div>
-            <p class="text-sm text-gray-600">Disk Usage</p>
-            <p id="diskDetails" class="text-xs text-gray-500">0/0 GB</p>
-        </div>
-
-        <!-- Network Traffic -->
-        <div class="text-center">
-            <div class="relative w-24 h-24 mx-auto mb-2">
-                <div class="w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center">
-                    <span class="text-2xl">📡</span>
-                </div>
-            </div>
-            <p class="text-sm text-gray-600">Network Traffic</p>
-            <p id="networkDetails" class="text-xs text-gray-500">0 B/s in, 0 B/s out</p>
-        </div>
-    </div>
-
-    <!-- Additional Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-        <div>
-            <p class="text-2xl font-bold text-blue-600" id="activeUsers">0</p>
-            <p class="text-sm text-gray-600">Active Users</p>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-green-600" id="totalUsers">0</p>
-            <p class="text-sm text-gray-600">Total Users</p>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-purple-600" id="runningContainers">0</p>
-            <p class="text-sm text-gray-600">Containers</p>
-        </div>
-        <div>
-            <p class="text-2xl font-bold text-orange-600" id="uptime">0d</p>
-            <p class="text-sm text-gray-600">Uptime</p>
-        </div>
-    </div>
-</div>
-
-<!-- User Creation Form -->
-<div class="bg-white p-6 rounded-lg shadow mb-8 overflow-x-auto">
-    <h3 class="text-lg font-semibold mb-4">Create New User</h3>
-    <!-- <form id="createUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-4"> -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Username</label>
-            <input type="text" id="username" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="Enter username">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Password</label>
-            <input type="password" id="password" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="Enter password">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">IP Address</label>
-            <select id="ip_address" required title="IP Address"
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Select IP Address</option>
-                {% for ip in available_ips %}
-                <option value="{{ ip }}">{{ ip }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Enabled Protocols</label>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <label class="flex items-center">
-                    <input type="checkbox" id="enable_ssh" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <span class="ml-2 text-sm">🔒 SSH</span>
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" id="enable_socks5" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <span class="ml-2 text-sm">🧦 SOCKS5</span>
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" id="enable_http" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <span class="ml-2 text-sm">🌐 HTTP</span>
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" id="enable_pptp" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <span class="ml-2 text-sm">📡 PPTP</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="md:col-span-2">
-            <button type="submit"
-                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                Create User
-            </button>
-        </div>
-    <!-- </form> -->
-</div>
-
-<!-- Advanced Configuration Panel -->
-<div class="bg-white p-6 rounded-lg shadow mb-8">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Advanced Configuration</h3>
-        <button id="toggleAdvanced" class="text-blue-600 hover:text-blue-800 text-sm">
-            Show Advanced Settings
-        </button>
-    </div>
-
-    <div id="advancedPanel" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Subnet Range</label>
-            <input type="text" id="subnet_range" value="{{ system_config.subnet_range }}" title="Subnet Range"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Network Interface</label>
-            <input type="text" id="network_interface" value="{{ system_config.network_interface }}" title="Network Interface"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Proxy Base Port</label>
-            <input type="number" id="proxy_base_port" value="{{ system_config.proxy_base_port }}" title="Proxy Base Port"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Gateway IP</label>
-            <input type="text" id="gateway_ip" value="{{ system_config.gateway_ip or '' }}" title="Gateway IP"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="e.g., 192.168.1.1">
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">DNS Servers</label>
-            <input type="text" id="dns_servers" value="{% if system_config.dns_servers %}{% for dns in system_config.dns_servers %}{{ dns }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}" title="DNS Servers"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="e.g., 8.8.8.8,8.8.4.4">
-        </div>
-
-        <div class="md:col-span-3">
-            <button id="saveConfigBtn"
-                    class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                Save Configuration
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- User Management Table -->
+<!-- Containers Overview -->
 <div class="bg-white rounded-lg shadow overflow-x-auto">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-semibold">User Management</h3>
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-semibold">Recent Containers</h3>
+        <a href="{{ url_for('containers') }}" class="btn">View All Containers</a>
     </div>
 
     <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Protocols</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Protocols</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200" id="userTableBody">
-                {% for user in users %}
-                <tr class="user-row" data-user-id="{{ user.id }}">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
-                        <div class="text-sm text-gray-500">Created {{ user.created_at.strftime('%Y-%m-%d') }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.ip_address }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex space-x-1">
-                            {% if user.enable_ssh %}<span class="text-sm" title="SSH">🔒</span>{% endif %}
-                            {% if user.enable_socks5 %}<span class="text-sm" title="SOCKS5">🧦</span>{% endif %}
-                            {% if user.enable_http %}<span class="text-sm" title="HTTP">🌐</span>{% endif %}
-                            {% if user.enable_pptp %}<span class="text-sm" title="PPTP">📡</span>{% endif %}
-                        </div>
-                    </td>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for c in containers[:10] %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ c.username }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ c.ip_address }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                             {% if user.status == 'active' %}bg-green-100 text-green-800{% elif user.status == 'disabled' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
-                            {{ user.status.title() }}
+                             {% if c.status == 'running' %}bg-green-100 text-green-800{% elif c.status == 'stopped' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ c.status.title() }}
                         </span>
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex space-x-1">
+                            {% if c.enable_ssh %}<span class="text-sm" title="SSH">🔒</span>{% endif %}
+                            {% if c.enable_socks5 %}<span class="text-sm" title="SOCKS5">🧦</span>{% endif %}
+                            {% if c.enable_http %}<span class="text-sm" title="HTTP">🌐</span>{% endif %}
+                            {% if c.enable_wireguard %}<span class="text-sm" title="WireGuard">🛡️</span>{% endif %}
+                        </div>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
-                        <button class="text-red-600 hover:text-red-900 delete-user-btn" data-user-id="{{ user.id }}">Delete</button>
+                        <a href="{{ url_for('container_detail', name=c.container_name) }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -428,10 +113,4 @@
         </table>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-// Dashboard specific JavaScript is handled in dashboard.js
-</script>
 {% endblock %}
