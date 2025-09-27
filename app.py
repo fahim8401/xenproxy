@@ -48,6 +48,9 @@ def inject_now():
 
 def initialize_application():
     """Initialize the application with database and default configuration."""
+    # Check if we're in production environment
+    is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('PRODUCTION') == 'true'
+    
     # Ensure instance directory exists
     os.makedirs(os.path.dirname(database_path), exist_ok=True)
     
@@ -83,26 +86,35 @@ def initialize_application():
     else:
         print("✓ Admin user exists")
 
-    # Apply system rules (with error handling for development environments)
-    try:
-        apply_all_system_rules()
-        print("✓ System rules applied")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not apply system rules: {e}")
+    # Apply system rules only in production environment
+    if is_production:
+        try:
+            apply_all_system_rules()
+            print("✓ System rules applied")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not apply system rules: {e}")
+    else:
+        print("ⓘ  Skipping system rules application (not in production)")
     
-    # Reconcile database with LXC (with error handling)
-    try:
-        reconcile_db_with_lxc()
-        print("✓ Database reconciled with LXC")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not reconcile with LXC: {e}")
+    # Reconcile database with LXC only in production environment
+    if is_production:
+        try:
+            reconcile_db_with_lxc()
+            print("✓ Database reconciled with LXC")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not reconcile with LXC: {e}")
+    else:
+        print("ⓘ  Skipping LXC reconciliation (not in production)")
     
-    # Start monitoring thread
-    try:
-        start_monitoring_thread()
-        print("✓ Monitoring thread started")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not start monitoring: {e}")
+    # Start monitoring thread only in production
+    if is_production:
+        try:
+            start_monitoring_thread(app)
+            print("✓ Monitoring thread started")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not start monitoring: {e}")
+    else:
+        print("ⓘ  Skipping monitoring thread (not in production)")
 
 with app.app_context():
     initialize_application()

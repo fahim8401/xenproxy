@@ -37,12 +37,11 @@ def get_container_resources(container_name):
         "active_connections": 0,
     }
 
-def update_bandwidth_stats():
+def update_bandwidth_stats(app):
     """Update bandwidth_in/bandwidth_out for each container every 60s."""
-    from flask import current_app
     while True:
         try:
-            with current_app.app_context():
+            with app.app_context():
                 containers = LxcContainer.query.all()
                 for container in containers:
                     # Example: parse /sys/class/net/vethX/statistics
@@ -75,7 +74,7 @@ def detect_abuse(container_name):
         db.session.commit()
         # Optionally, alert admin
 
-def start_monitoring_thread():
+def start_monitoring_thread(app):
     """Start background thread for bandwidth and health checks."""
-    t = threading.Thread(target=update_bandwidth_stats, daemon=True)
+    t = threading.Thread(target=update_bandwidth_stats, args=(app,), daemon=True)
     t.start()
