@@ -60,7 +60,34 @@ ipaddress==1.0.23
 
 ## 🛠️ Installation & Setup
 
-### 1. System Preparation
+### Automated Installation (Recommended)
+
+For Ubuntu 20.04/22.04 servers, use the automated installation script:
+
+```bash
+# Download or clone the repository
+git clone https://github.com/your-repo/ip-gateway-router.git
+cd ip-gateway-router
+
+# Make script executable and run
+chmod +x install.sh
+./install.sh
+```
+
+The script will:
+- ✅ Update system packages
+- ✅ Install all system dependencies (Docker, PPTP, Python, etc.)
+- ✅ Configure network settings and firewall
+- ✅ Install Python dependencies
+- ✅ Set up PPTP VPN server
+- ✅ Configure systemd service for auto-start
+- ✅ Test installation and start the application
+
+### Manual Installation
+
+If you prefer manual installation or are using a different Linux distribution:
+
+#### 1. System Preparation
 ```bash
 # Update system
 sudo apt-get update && sudo apt-get upgrade -y
@@ -76,7 +103,7 @@ sudo systemctl enable docker
 sudo usermod -aG docker $USER
 ```
 
-### 2. Application Setup
+#### 2. Application Setup
 ```bash
 # Clone or download the application
 cd /path/to/application
