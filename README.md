@@ -12,6 +12,7 @@ A production-ready Python Flask application for managing a secure, multi-protoco
 - **Monitoring:** Built-in host and container resource monitoring, abuse detection, auto-recovery, audit logs.
 - **System Management:** Linux bridge, NAT, auto IP assignment, PostgreSQL backend.
 - **Fully Automated Install:** Use `install.sh` for A-Z setup (system deps, DB, LXC, templates, static, DB init).
+- **Root-Compatible:** Works on both Ubuntu and AlmaLinux as root (or with sudo).
 
 ---
 
@@ -47,14 +48,15 @@ templates/
 
 ---
 
-## Quick Start (A-Z Automated)
+## Quick Start (A-Z Automated, Ubuntu/AlmaLinux, root or sudo)
 
-1. **Clone the repo and run the installer:**
+1. **Clone the repo and run the installer as root:**
     ```bash
     git clone https://github.com/fahim8401/xenproxy.git
     cd xenproxy
     chmod +x install.sh
-    ./install.sh
+    sudo ./install.sh
+    # or: su - && ./install.sh
     ```
 
 2. **Run the app:**
@@ -94,6 +96,14 @@ templates/
 - Database backup script included
 - Container configuration backup
 - Restore procedure documented
+
+---
+
+## OS Compatibility
+
+- **Ubuntu 22.04+** (Debian-based)
+- **AlmaLinux 8+/CentOS/RHEL** (RedHat-based)
+- Must be run as root or with sudo for full automation
 
 ---
 
