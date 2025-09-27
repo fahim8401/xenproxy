@@ -72,12 +72,25 @@ service/
       ```
     - Then re-run `sudo ./install.sh` to continue.
 
-3. **After install, the app runs in the background.**
+3. **If you see "password authentication failed for user 'postgres'":**
+    - Edit `/etc/postgresql/*/main/pg_hba.conf` (Ubuntu) or `/var/lib/pgsql/data/pg_hba.conf` (AlmaLinux/CentOS).
+    - Change the `METHOD` for `local` and `host` lines for user `postgres` to `md5` or `trust` (for local testing).
+    - Restart PostgreSQL:
+      ```bash
+      sudo systemctl restart postgresql
+      ```
+    - Set the password for the postgres user:
+      ```bash
+      sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+      ```
+    - Then re-run the application.
+
+4. **After install, the app runs in the background.**
     - View logs: `tail -f xenproxy.log`
     - Stop: `pkill -f 'python app.py'`
     - To run as a service: see below.
 
-4. **(Recommended) Run as a systemd service:**
+5. **(Recommended) Run as a systemd service:**
     ```bash
     sudo cp service/xenproxy.service /etc/systemd/system/xenproxy.service
     sudo systemctl daemon-reload
@@ -88,7 +101,7 @@ service/
     # To check status: sudo systemctl status xenproxy
     ```
 
-5. **Access the admin panel:**  
+6. **Access the admin panel:**  
    [http://localhost:3030](http://localhost:3030)
 
 ---
