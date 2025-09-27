@@ -11,6 +11,7 @@ A production-ready Python Flask application for managing a secure, multi-protoco
 - **Security:** Argon2 password hashing, CSRF protection, rate limiting, input validation, HTTPS-only in production.
 - **Monitoring:** Built-in host and container resource monitoring, abuse detection, auto-recovery, audit logs.
 - **System Management:** Linux bridge, NAT, auto IP assignment, PostgreSQL backend.
+- **Fully Automated Install:** Use `install.sh` for A-Z setup (system deps, DB, LXC, templates, static, DB init).
 
 ---
 
@@ -25,6 +26,7 @@ system_manager.py
 monitor.py
 requirements.txt
 README.md
+install.sh
 lxc-templates/
     alpine-config
     setup-services.sh
@@ -45,37 +47,25 @@ templates/
 
 ---
 
-## Deployment
+## Quick Start (A-Z Automated)
 
-### Prerequisites
-
-- Ubuntu 22.04 LTS
-- LXC 5.0+ (`apt install lxc lxc-templates bridge-utils`)
-- PostgreSQL 14+ (`apt install postgresql postgresql-client`)
-- Python 3.10+ (`apt install python3-pip`)
-- iptables, iproute2
-
-### Installation
-
-1. Clone the repo and install Python dependencies:
+1. **Clone the repo and run the installer:**
+    ```bash
+    git clone https://github.com/fahim8401/xenproxy.git
+    cd xenproxy
+    chmod +x install.sh
+    ./install.sh
     ```
-    pip install -r requirements.txt
-    ```
-2. Configure PostgreSQL and set `DATABASE_URL` in your environment:
-    ```
+
+2. **Run the app:**
+    ```bash
+    source venv/bin/activate
     export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
-    ```
-3. Run the app:
-    ```
     python app.py
     ```
-4. Access the admin panel at [http://localhost:3030](http://localhost:3030)
 
-### Production
-
-- Use Gunicorn and Nginx as a reverse proxy (HTTPS required).
-- Set `SESSION_COOKIE_SECURE=True` and a strong `SECRET_KEY`.
-- Run as a non-root user with sudo access to LXC and networking commands.
+3. **Access the admin panel:**  
+   [http://localhost:3030](http://localhost:3030)
 
 ---
 
