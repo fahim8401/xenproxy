@@ -1,11 +1,34 @@
 #!/bin/bash
-# LXC Multi-Protocol IP Gateway Admin Panel Automated Installer (A-Z)
+# LXC Multi-Protocol IP Gateway Admin Panel Automated Installer (Ubuntu/AlmaLinux, root compatible)
 
 set -e
 
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Please run as root (sudo su - or sudo ./install.sh)"
+  exit 1
+fi
+
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  OS=$ID
+else
+  echo "Cannot detect OS."
+  exit 1
+fi
+
 echo "==> [1/8] Installing system dependencies..."
-sudo apt-get update
-sudo apt-get install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute2 postgresql postgresql-client git curl
+if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
+  apt-get update
+  apt-get install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute2 postgresql postgresql-client git curl
+elif [[ "$OS" == "almalinux" || "$OS" == "centos" || "$OS" == "rhel" ]]; then
+  dnf install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute postgresql-server postgresql git curl
+  postgresql-setup --initdb
+  systemctl enable postgresql
+  systemctl start postgresql
+else
+  echo "Unsupported OS: $OS"
+  exit 1
+fi
 
 echo "==> [2/8] Setting up Python virtual environment..."
 python3 -m venv venv
@@ -16,9 +39,10 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 echo "==> [4/8] Creating PostgreSQL database and user..."
-sudo systemctl enable postgresql
-sudo systemctl start postgresql
-sudo -u postgres psql <<EOF
+if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
+  systemctl enable postgresql
+  systemctl start postgresql
+  sudo -u postgres psql <<EOF
 DO \$\$
 BEGIN
    IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ipgw') THEN
@@ -30,14 +54,28 @@ BEGIN
 END
 \$\$;
 EOF
+elif [[ "$OS" == "almalinux" || "$OS" == "centos" || "$OS" == "rhel" ]]; then
+  sudo -u postgres psql <<EOF
+DO \$\$
+BEGIN
+   IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ipgw') THEN
+      CREATE DATABASE ipgw;
+   END IF;
+   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres') THEN
+      CREATE USER postgres WITH PASSWORD 'postgres';
+   END IF;
+END
+\$\$;
+EOF
+fi
 
 echo "==> [5/8] Setting up LXC bridge (br0) and network..."
-sudo ip link add name br0 type bridge || true
-sudo ip addr flush dev br0 || true
-sudo ip addr add 203.0.113.1/24 dev br0 || true
-sudo ip link set br0 up
-sudo sysctl -w net.ipv4.ip_forward=1
-sudo iptables -t nat -C POSTROUTING -s 203.0.113.0/24 -j MASQUERADE || sudo iptables -t nat -A POSTROUTING -s 203.0.113.0/24 -j MASQUERADE
+ip link add name br0 type bridge || true
+ip addr flush dev br0 || true
+ip addr add 203.0.113.1/24 dev br0 || true
+ip link set br0 up
+sysctl -w net.ipv4.ip_forward=1
+iptables -t nat -C POSTROUTING -s 203.0.113.0/24 -j MASQUERADE || iptables -t nat -A POSTROUTING -s 203.0.113.0/24 -j MASQUERADE
 
 echo "==> [6/8] Creating folders for LXC templates and static assets..."
 mkdir -p lxc-templates static/css static/js
