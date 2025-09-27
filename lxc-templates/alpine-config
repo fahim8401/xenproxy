@@ -1,0 +1,14 @@
+lxc.include = /usr/share/lxc/config/alpine.common.conf
+lxc.arch = x86_64
+lxc.rootfs.path = dir:/var/lib/lxc/{{container_name}}/rootfs
+lxc.uts.name = {{username}}
+lxc.net.0.type = veth
+lxc.net.0.link = {{bridge_name}}
+lxc.net.0.flags = up
+lxc.net.0.ipv4.address = {{ip_address}}/24
+lxc.net.0.ipv4.gateway = auto
+lxc.apparmor.profile = generated
+lxc.idmap = u 0 100000 65536
+lxc.idmap = g 0 100000 65536
+lxc.cgroup2.cpu.max = {{cpu_limit_times_100000}} 100000
+lxc.cgroup2.memory.max = {{memory_limit_bytes}}

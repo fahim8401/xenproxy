@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Containers{% endblock %}
+{% block content %}
+<div class="container">
+  <h2>Containers</h2>
+  <div class="actions">
+    <a href="{{ url_for('dashboard') }}" class="btn">Back to Dashboard</a>
+    <button class="btn" id="create-container-btn">Create New Container</button>
+  </div>
+  <div class="search-filter">
+    <input type="text" id="search" placeholder="Search by username or IP">
+    <select id="status-filter">
+      <option value="">All Status</option>
+      <option value="running">Running</option>
+      <option value="stopped">Stopped</option>
+      <option value="creating">Creating</option>
+    </select>
+    <select id="protocol-filter">
+      <option value="">All Protocols</option>
+      <option value="ssh">SSH</option>
+      <option value="socks5">SOCKS5</option>
+      <option value="http">HTTP</option>
+      <option value="wireguard">WireGuard</option>
+    </select>
+  </div>
+  <form id="bulk-actions-form" method="post">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="select-all"></th>
+          <th>Username</th>
+          <th>IP Address</th>
+          <th>Status</th>
+          <th>Protocols</th>
+          <th>Bandwidth</th>
+          <th>Health</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="container-table-body">
+        {% for c in containers %}
+        <tr>
+          <td><input type="checkbox" name="selected" value="{{ c.container_name }}"></td>
+          <td>{{ c.username }}</td>
+          <td>{{ c.ip_address }}</td>
+          <td>
+            {% if c.status == 'running' %}
+              <span class="status-dot running"></span> Running
+            {% elif c.status == 'stopped' %}
+              <span class="status-dot stopped"></span> Stopped
+            {% else %}
+              <span class="status-dot creating"></span> Creating
+            {% endif %}
+          </td>
+          <td>
+            {% if c.enable_ssh %}<span title="SSH">🔒</span>{% endif %}
+            {% if c.enable_socks5 %}<span title="SOCKS5">🧦</span>{% endif %}
+            {% if c.enable_http %}<span title="HTTP">🌐</span>{% endif %}
+            {% if c.enable_wireguard %}<span title="WireGuard">🛡️</span>{% endif %}
+          </td>
+          <td>{{ (c.bandwidth_in + c.bandwidth_out) // (1024*1024) }} MB</td>
+          <td>
+            {% if c.health_status == 'healthy' %}
+              <span class="health-dot healthy"></span> Healthy
+            {% elif c.health_status == 'degraded' %}
+              <span class="health-dot degraded"></span> Degraded
+            {% else %}
+              <span class="health-dot failed"></span> Failed
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('container_detail', name=c.container_name) }}" class="btn btn-small">View</a>
+            <form action="{{ url_for('start_container_route', name=c.container_name) }}" method="post" style="display:inline;">
+              <button class="btn btn-small" type="submit">Start</button>
+            </form>
+            <form action="{{ url_for('stop_container_route', name=c.container_name) }}" method="post" style="display:inline;">
+              <button class="btn btn-small" type="submit">Stop</button>
+            </form>
+            <form action="{{ url_for('delete_container_route', name=c.container_name) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this container?');">
+              <button class="btn btn-small btn-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="bulk-actions">
+      <button class="btn" type="submit" formaction="/containers/bulk/start">Start Selected</button>
+      <button class="btn" type="submit" formaction="/containers/bulk/stop">Stop Selected</button>
+      <button class="btn btn-danger" type="submit" formaction="/containers/bulk/delete" onclick="return confirm('Delete selected containers?');">Delete Selected</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

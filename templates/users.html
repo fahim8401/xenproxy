@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Admin Users{% endblock %}
+{% block content %}
+<div class="container">
+  <h2>Admin Users</h2>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Created</th>
+        <th>Last Login</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for admin in admins %}
+      <tr>
+        <td>{{ admin.username }}</td>
+        <td>{{ admin.created_at }}</td>
+        <td>{{ admin.last_login or "Never" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h3>Add New Admin</h3>
+  <form method="post" action="{{ url_for('add_admin') }}">
+    <label for="username">Username</label>
+    <input type="text" name="username" required pattern="^[a-z][a-z0-9_]{2,30}$">
+    <label for="password">Password</label>
+    <input type="password" name="password" required minlength="8">
+    <button class="btn" type="submit">Add Admin</button>
+  </form>
+</div>
+{% endblock %}

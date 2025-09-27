@@ -31,6 +31,38 @@
 
     <div class="bg-white p-6 rounded-lg shadow">
         <div class="flex items-center">
+            <div class="p-2 bg-blue-100 rounded-lg">
+                <span class="text-2xl">🌐</span>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Gateway IP</p>
+                <p class="text-lg font-semibold text-gray-900">{{ system_config.gateway_ip or 'Not detected' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="p-2 bg-purple-100 rounded-lg">
+                <span class="text-2xl">📡</span>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">DNS Servers</p>
+                <p class="text-lg font-semibold text-gray-900">
+                    {% if system_config.dns_servers %}
+                        {% for dns in system_config.dns_servers %}
+                            {{ dns }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        Not configured
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
             <div class="p-2 bg-purple-100 rounded-lg">
                 <span class="text-2xl">👥</span>
             </div>
@@ -322,6 +354,20 @@
             <label class="block text-sm font-medium text-gray-700">Proxy Base Port</label>
             <input type="number" id="proxy_base_port" value="{{ system_config.proxy_base_port }}" title="Proxy Base Port"
                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Gateway IP</label>
+            <input type="text" id="gateway_ip" value="{{ system_config.gateway_ip or '' }}" title="Gateway IP"
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                   placeholder="e.g., 192.168.1.1">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">DNS Servers</label>
+            <input type="text" id="dns_servers" value="{% if system_config.dns_servers %}{% for dns in system_config.dns_servers %}{{ dns }}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}" title="DNS Servers"
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                   placeholder="e.g., 8.8.8.8,8.8.4.4">
         </div>
 
         <div class="md:col-span-3">

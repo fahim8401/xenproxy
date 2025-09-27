@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+{% block content %}
+<div class="container">
+  <h2>Audit Logs</h2>
+  <div class="log-controls">
+    <form method="get" action="{{ url_for('logs') }}">
+      <label for="date-range">Date Range:</label>
+      <input type="date" name="start_date">
+      <input type="date" name="end_date">
+      <label for="log-level">Log Level:</label>
+      <select name="log_level">
+        <option value="">All</option>
+        <option value="info">Info</option>
+        <option value="warning">Warning</option>
+        <option value="error">Error</option>
+      </select>
+      <input type="text" name="search" placeholder="Search by container or user">
+      <button class="btn" type="submit">Filter</button>
+      <a href="{{ url_for('logs') }}" class="btn">Clear</a>
+      <a href="{{ url_for('api_logs') }}" class="btn">Export CSV</a>
+    </form>
+  </div>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Admin</th>
+        <th>Action</th>
+        <th>Details</th>
+        <th>IP Address</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.timestamp }}</td>
+        <td>{{ log.admin.username }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.details }}</td>
+        <td>{{ log.ip_address }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
