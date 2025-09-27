@@ -1,86 +1,105 @@
 {% extends "base.html" %}
 {% block title %}Container Detail{% endblock %}
 {% block content %}
-<div class="container">
-  <h2>Container: {{ container.container_name }}</h2>
-  <div class="container-info">
-    <p><strong>Username:</strong> {{ container.username }}</p>
-    <p><strong>IP Address:</strong> {{ container.ip_address }}</p>
-    <p><strong>Status:</strong>
-      {% if container.status == 'running' %}
-        <span class="status-dot running"></span> Running
-      {% elif container.status == 'stopped' %}
-        <span class="status-dot stopped"></span> Stopped
-      {% else %}
-        <span class="status-dot creating"></span> Creating
-      {% endif %}
-    </p>
-    <p><strong>Created:</strong> {{ container.created_at }}</p>
-    <p><strong>Resource Limits:</strong>
-      CPU: {{ container.cpu_limit }} |
-      Memory: {{ container.memory_limit // (1024*1024) }} MB |
-      Disk: {{ container.disk_limit // (1024*1024) }} MB
-    </p>
-    <p><strong>Protocols:</strong>
-      {% if container.enable_ssh %}<span title="SSH">🔒</span>{% endif %}
-      {% if container.enable_socks5 %}<span title="SOCKS5">🧦</span>{% endif %}
-      {% if container.enable_http %}<span title="HTTP">🌐</span>{% endif %}
-      {% if container.enable_wireguard %}<span title="WireGuard">🛡️</span>{% endif %}
-    </p>
-    <p><strong>Health:</strong>
-      {% if container.health_status == 'healthy' %}
-        <span class="health-dot healthy"></span> Healthy
-      {% elif container.health_status == 'degraded' %}
-        <span class="health-dot degraded"></span> Degraded
-      {% else %}
-        <span class="health-dot failed"></span> Failed
-      {% endif %}
-    </p>
-    <p><strong>Bandwidth Used:</strong> {{ (container.bandwidth_in + container.bandwidth_out) // (1024*1024) }} MB</p>
+<div class="container max-w-3xl mx-auto">
+  <h2 class="text-2xl font-bold mb-4">Container: {{ container.container_name }}</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="mb-2 flex flex-wrap gap-2">
+        <span class="font-semibold">Username:</span> <span>{{ container.username }}</span>
+        <span class="font-semibold ml-4">IP:</span> <span>{{ container.ip_address }}</span>
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Status:</span>
+        {% if container.status == 'running' %}
+          <span class="status-dot running"></span> <span class="text-green-700 font-medium">Running</span>
+        {% elif container.status == 'stopped' %}
+          <span class="status-dot stopped"></span> <span class="text-red-700 font-medium">Stopped</span>
+        {% else %}
+          <span class="status-dot creating"></span> <span class="text-yellow-700 font-medium">Creating</span>
+        {% endif %}
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Created:</span> {{ container.created_at }}
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Resource Limits:</span>
+        CPU: {{ container.cpu_limit }} | Memory: {{ container.memory_limit // (1024*1024) }} MB | Disk: {{ container.disk_limit // (1024*1024) }} MB
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Protocols:</span>
+        {% if container.enable_ssh %}<span title="SSH">🔒</span>{% endif %}
+        {% if container.enable_socks5 %}<span title="SOCKS5">🧦</span>{% endif %}
+        {% if container.enable_http %}<span title="HTTP">🌐</span>{% endif %}
+        {% if container.enable_wireguard %}<span title="WireGuard">🛡️</span>{% endif %}
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Health:</span>
+        {% if container.health_status == 'healthy' %}
+          <span class="health-dot healthy"></span> <span class="text-green-700 font-medium">Healthy</span>
+        {% elif container.health_status == 'degraded' %}
+          <span class="health-dot degraded"></span> <span class="text-yellow-700 font-medium">Degraded</span>
+        {% else %}
+          <span class="health-dot failed"></span> <span class="text-red-700 font-medium">Failed</span>
+        {% endif %}
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Bandwidth Used:</span> {{ (container.bandwidth_in + container.bandwidth_out) // (1024*1024) }} MB
+      </div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 flex flex-col gap-4">
+      <div class="resource-graphs grid grid-cols-1 gap-2">
+        <canvas id="cpuChart"></canvas>
+        <canvas id="memChart"></canvas>
+        <canvas id="bwChart"></canvas>
+      </div>
+    </div>
   </div>
-  <div class="resource-graphs">
-    <canvas id="cpuChart"></canvas>
-    <canvas id="memChart"></canvas>
-    <canvas id="bwChart"></canvas>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-lg font-semibold mb-2">Service Status</h3>
+      <ul class="mb-2">
+        <li>SSH (22): <span id="ssh-status"></span></li>
+        <li>SOCKS5 (1080): <span id="socks5-status"></span></li>
+        <li>HTTP (8080): <span id="http-status"></span></li>
+        <li>WireGuard: <span id="wg-status"></span></li>
+      </ul>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn" onclick="testService('ssh')">Test SSH</button>
+        <button class="btn" onclick="testService('socks5')">Test SOCKS5</button>
+        <button class="btn" onclick="testService('http')">Test HTTP</button>
+        <button class="btn" onclick="testService('wireguard')">Test WireGuard</button>
+      </div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-lg font-semibold mb-2">Connection Instructions</h3>
+      <ul class="mb-2">
+        {% if container.enable_ssh %}
+        <li>SSH: <code>ssh -D 1080 {{ container.username }}@{{ container.ip_address }}</code></li>
+        {% endif %}
+        {% if container.enable_socks5 %}
+        <li>SOCKS5: Server={{ container.ip_address }}, Port=1080, User={{ container.username }}, Pass=[generated]</li>
+        {% endif %}
+        {% if container.enable_http %}
+        <li>HTTP: <code>http://{{ container.username }}:password@{{ container.ip_address }}:8080</code></li>
+        {% endif %}
+        {% if container.enable_wireguard %}
+        <!-- WireGuard: Download Config (feature not implemented) -->
+        {% endif %}
+      </ul>
+    </div>
   </div>
-  <div class="service-status">
-    <h3>Service Status</h3>
-    <ul>
-      <li>SSH (22): <span id="ssh-status"></span></li>
-      <li>SOCKS5 (1080): <span id="socks5-status"></span></li>
-      <li>HTTP (8080): <span id="http-status"></span></li>
-      <li>WireGuard: <span id="wg-status"></span></li>
-    </ul>
-    <button class="btn" onclick="testService('ssh')">Test SSH</button>
-    <button class="btn" onclick="testService('socks5')">Test SOCKS5</button>
-    <button class="btn" onclick="testService('http')">Test HTTP</button>
-    <button class="btn" onclick="testService('wireguard')">Test WireGuard</button>
-  </div>
-  <div class="connection-instructions">
-    <h3>Connection Instructions</h3>
-    <ul>
-      {% if container.enable_ssh %}
-      <li>SSH: <code>ssh -D 1080 {{ container.username }}@{{ container.ip_address }}</code></li>
-      {% endif %}
-      {% if container.enable_socks5 %}
-      <li>SOCKS5: Server={{ container.ip_address }}, Port=1080, User={{ container.username }}, Pass=[generated]</li>
-      {% endif %}
-      {% if container.enable_http %}
-      <li>HTTP: <code>http://{{ container.username }}:password@{{ container.ip_address }}:8080</code></li>
-      {% endif %}
-      {% if container.enable_wireguard %}
-      <li>WireGuard: <a href="{{ url_for('download_wg_config', name=container.container_name) }}">Download Config</a></li>
-      {% endif %}
-    </ul>
-  </div>
-  <div class="actions">
-    <form action="{{ url_for('start_container_route', name=container.container_name) }}" method="post" style="display:inline;">
+  <div class="flex flex-wrap gap-2 mb-4">
+    <form action="{{ url_for('start_container_route', name=container.container_name) }}" method="post" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn" type="submit">Start</button>
     </form>
-    <form action="{{ url_for('stop_container_route', name=container.container_name) }}" method="post" style="display:inline;">
+    <form action="{{ url_for('stop_container_route', name=container.container_name) }}" method="post" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn" type="submit">Stop</button>
     </form>
-    <form action="{{ url_for('delete_container_route', name=container.container_name) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this container?');">
+    <form action="{{ url_for('delete_container_route', name=container.container_name) }}" method="post" class="inline" onsubmit="return confirm('Delete this container?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-danger" type="submit">Delete</button>
     </form>
   </div>

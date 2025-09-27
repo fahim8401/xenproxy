@@ -2,20 +2,60 @@
 {% block title %}Containers{% endblock %}
 {% block content %}
 <div class="container">
-  <h2>Containers</h2>
-  <div class="actions">
-    <a href="{{ url_for('dashboard') }}" class="btn">Back to Dashboard</a>
-    <button class="btn" id="create-container-btn">Create New Container</button>
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+    <h2 class="text-2xl font-bold mb-2 md:mb-0">Containers</h2>
+    <div class="flex gap-2">
+      <a href="{{ url_for('dashboard') }}" class="btn">Back to Dashboard</a>
+      <button class="btn bg-green-600 hover:bg-green-700" id="create-container-btn">+ Create New Container</button>
+    </div>
   </div>
-  <div class="search-filter">
-    <input type="text" id="search" placeholder="Search by username or IP">
-    <select id="status-filter">
+
+  <!-- Create Container Modal -->
+  <div id="create-container-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+      <button id="close-create-modal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">&times;</button>
+      <h3 class="text-xl font-bold mb-4">Create New Container</h3>
+      <form id="create-container-form" action="{{ url_for('create_container_route') }}" method="post" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="block font-semibold mb-1">Username</label>
+          <input type="text" name="username" class="w-full border rounded px-3 py-2" required>
+        </div>
+        <div class="mb-3">
+          <label class="block font-semibold mb-1">IP Address</label>
+          <input type="text" name="ip_address" class="w-full border rounded px-3 py-2" required placeholder="e.g. 172.16.100.10">
+        </div>
+        <div class="mb-3">
+          <label class="block font-semibold mb-1">SSH Public Key</label>
+          <textarea name="ssh_public_key" class="w-full border rounded px-3 py-2" rows="2" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="block font-semibold mb-1">Protocols</label>
+          <div class="flex gap-4 flex-wrap">
+            <label><input type="checkbox" name="enable_ssh"> SSH</label>
+            <label><input type="checkbox" name="enable_socks5"> SOCKS5</label>
+            <label><input type="checkbox" name="enable_http"> HTTP</label>
+            <label><input type="checkbox" name="enable_wireguard"> WireGuard</label>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" id="cancel-create-modal" class="btn bg-gray-300 text-gray-800">Cancel</button>
+          <button type="submit" class="btn bg-green-600 hover:bg-green-700">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+    </div>
+  </div>
+  <div class="search-filter bg-gray-50 p-3 rounded mb-4 flex flex-col md:flex-row gap-2 md:gap-4">
+    <input type="text" id="search" placeholder="Search by username or IP" class="flex-1 border border-gray-300 rounded px-3 py-2">
+    <select id="status-filter" class="border border-gray-300 rounded px-3 py-2">
       <option value="">All Status</option>
       <option value="running">Running</option>
       <option value="stopped">Stopped</option>
       <option value="creating">Creating</option>
     </select>
-    <select id="protocol-filter">
+    <select id="protocol-filter" class="border border-gray-300 rounded px-3 py-2">
       <option value="">All Protocols</option>
       <option value="ssh">SSH</option>
       <option value="socks5">SOCKS5</option>
@@ -23,72 +63,74 @@
       <option value="wireguard">WireGuard</option>
     </select>
   </div>
-  <form id="bulk-actions-form" method="post">
-    <table class="admin-table">
-      <thead>
-        <tr>
-          <th><input type="checkbox" id="select-all"></th>
-          <th>Username</th>
-          <th>IP Address</th>
-          <th>Status</th>
-          <th>Protocols</th>
-          <th>Bandwidth</th>
-          <th>Health</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="container-table-body">
-        {% for c in containers %}
-        <tr>
-          <td><input type="checkbox" name="selected" value="{{ c.container_name }}"></td>
-          <td>{{ c.username }}</td>
-          <td>{{ c.ip_address }}</td>
-          <td>
-            {% if c.status == 'running' %}
-              <span class="status-dot running"></span> Running
-            {% elif c.status == 'stopped' %}
-              <span class="status-dot stopped"></span> Stopped
-            {% else %}
-              <span class="status-dot creating"></span> Creating
-            {% endif %}
-          </td>
-          <td>
-            {% if c.enable_ssh %}<span title="SSH">🔒</span>{% endif %}
-            {% if c.enable_socks5 %}<span title="SOCKS5">🧦</span>{% endif %}
-            {% if c.enable_http %}<span title="HTTP">🌐</span>{% endif %}
-            {% if c.enable_wireguard %}<span title="WireGuard">🛡️</span>{% endif %}
-          </td>
-          <td>{{ (c.bandwidth_in + c.bandwidth_out) // (1024*1024) }} MB</td>
-          <td>
-            {% if c.health_status == 'healthy' %}
-              <span class="health-dot healthy"></span> Healthy
-            {% elif c.health_status == 'degraded' %}
-              <span class="health-dot degraded"></span> Degraded
-            {% else %}
-              <span class="health-dot failed"></span> Failed
-            {% endif %}
-          </td>
-          <td>
-            <a href="{{ url_for('container_detail', name=c.container_name) }}" class="btn btn-small">View</a>
-            <form action="{{ url_for('start_container_route', name=c.container_name) }}" method="post" style="display:inline;">
-              <button class="btn btn-small" type="submit">Start</button>
-            </form>
-            <form action="{{ url_for('stop_container_route', name=c.container_name) }}" method="post" style="display:inline;">
-              <button class="btn btn-small" type="submit">Stop</button>
-            </form>
-            <form action="{{ url_for('delete_container_route', name=c.container_name) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this container?');">
-              <button class="btn btn-small btn-danger" type="submit">Delete</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <div class="bulk-actions">
-      <button class="btn" type="submit" formaction="/containers/bulk/start">Start Selected</button>
-      <button class="btn" type="submit" formaction="/containers/bulk/stop">Stop Selected</button>
-      <button class="btn btn-danger" type="submit" formaction="/containers/bulk/delete" onclick="return confirm('Delete selected containers?');">Delete Selected</button>
+  <!-- <form id="bulk-actions-form" method="post"> -->
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="overflow-x-auto rounded shadow">
+      <table class="admin-table min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2"><input type="checkbox" id="select-all"></th>
+            <th class="px-4 py-2">Username</th>
+            <th class="px-4 py-2">IP Address</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Protocols</th>
+            <th class="px-4 py-2">Bandwidth</th>
+            <th class="px-4 py-2">Health</th>
+            <th class="px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="container-table-body" class="bg-white divide-y divide-gray-100">
+          {% for c in containers %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2"><input type="checkbox" name="selected" value="{{ c.container_name }}"></td>
+            <td class="px-4 py-2 font-semibold">{{ c.username }}</td>
+            <td class="px-4 py-2">{{ c.ip_address }}</td>
+            <td class="px-4 py-2">
+              {% if c.status == 'running' %}
+                <span class="status-dot running"></span> <span class="text-green-700 font-medium">Running</span>
+              {% elif c.status == 'stopped' %}
+                <span class="status-dot stopped"></span> <span class="text-red-700 font-medium">Stopped</span>
+              {% else %}
+                <span class="status-dot creating"></span> <span class="text-yellow-700 font-medium">Creating</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2">
+              {% if c.enable_ssh %}<span title="SSH">🔒</span>{% endif %}
+              {% if c.enable_socks5 %}<span title="SOCKS5">🧦</span>{% endif %}
+              {% if c.enable_http %}<span title="HTTP">🌐</span>{% endif %}
+              {% if c.enable_wireguard %}<span title="WireGuard">🛡️</span>{% endif %}
+            </td>
+            <td class="px-4 py-2">{{ (c.bandwidth_in + c.bandwidth_out) // (1024*1024) }} MB</td>
+            <td class="px-4 py-2">
+              {% if c.health_status == 'healthy' %}
+                <span class="health-dot healthy"></span> <span class="text-green-700 font-medium">Healthy</span>
+              {% elif c.health_status == 'degraded' %}
+                <span class="health-dot degraded"></span> <span class="text-yellow-700 font-medium">Degraded</span>
+              {% else %}
+                <span class="health-dot failed"></span> <span class="text-red-700 font-medium">Failed</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2 space-x-1">
+              <a href="{{ url_for('container_detail', name=c.container_name) }}" class="btn btn-small">View</a>
+              <form action="{{ url_for('start_container_route', name=c.container_name) }}" method="post" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-small" type="submit">Start</button>
+              </form>
+              <form action="{{ url_for('stop_container_route', name=c.container_name) }}" method="post" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-small" type="submit">Stop</button>
+              </form>
+              <form action="{{ url_for('delete_container_route', name=c.container_name) }}" method="post" class="inline" onsubmit="return confirm('Delete this container?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-small btn-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </form>
+    <!-- Bulk actions not implemented -->
+  <!-- </form> -->
 </div>
 {% endblock %}

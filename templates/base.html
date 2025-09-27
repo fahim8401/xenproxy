@@ -20,14 +20,14 @@
                 <a href="{{ url_for('dashboard') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'dashboard' %}bg-gray-700{% endif %}">
                     📊 Dashboard
                 </a>
-                <a href="{{ url_for('audit_logs') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'audit_logs' %}bg-gray-700{% endif %}">
-                    📋 Audit Logs
+                <a href="{{ url_for('containers') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'containers' %}bg-gray-700{% endif %}">
+                    � Containers
                 </a>
-                <a href="{{ url_for('system_health') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'system_health' %}bg-gray-700{% endif %}">
-                    📈 System Health
+                <a href="{{ url_for('logs') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'logs' %}bg-gray-700{% endif %}">
+                    � Audit Logs
                 </a>
-                <a href="{{ url_for('bulk_operations') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'bulk_operations' %}bg-gray-700{% endif %}">
-                    👥 Bulk Operations
+                <a href="{{ url_for('system_settings') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.endpoint == 'system_settings' %}bg-gray-700{% endif %}">
+                    ⚙️ System Settings
                 </a>
                 <div class="border-t border-gray-600 mt-8 pt-4">
                     <a href="{{ url_for('logout') }}" class="block py-2 px-4 hover:bg-red-700 text-red-300">

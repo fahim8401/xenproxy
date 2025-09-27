@@ -1,14 +1,20 @@
 [Unit]
-Description=XenProxy LXC Multi-Protocol Gateway Admin Panel
-After=network.target postgresql.service
+Description=XenProxy LXC Multi-Protocol Gateway Admin Panel (SQLite)
+After=network.target
 
 [Service]
 Type=simple
 WorkingDirectory=/root/xenproxy
-Environment="DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw"
-ExecStart=/root/xenproxy/venv/bin/python /root/xenproxy/app.py
+ExecStart=/usr/bin/python3 /root/xenproxy/app.py
 Restart=on-failure
+RestartSec=5
 User=root
+Group=root
+
+# Ensure the application has write access to the database
+# and can create network bridges
+AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN
+Environment="FLASK_ENV=production"
 
 [Install]
 WantedBy=multi-user.target

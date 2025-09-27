@@ -1,11 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy import func
 from datetime import datetime
 
 db = SQLAlchemy()
 
 class Admin(db.Model):
+    """Admin user model for authentication and authorization."""
     __tablename__ = 'admins'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(32), unique=True, nullable=False)
@@ -14,11 +14,12 @@ class Admin(db.Model):
     last_login = db.Column(db.DateTime)
 
 class LxcContainer(db.Model):
+    """LXC container model with all configuration and status information."""
     __tablename__ = 'lxc_containers'
     id = db.Column(db.Integer, primary_key=True)
     container_name = db.Column(db.String(64), unique=True, nullable=False)
     username = db.Column(db.String(32), nullable=False)
-    ip_address = db.Column(INET, unique=True, nullable=False)
+    ip_address = db.Column(db.String(45), unique=True, nullable=False)  # SQLite compatible IP storage
     status = db.Column(db.String(16), nullable=False, default='creating')
     created_at = db.Column(db.DateTime, default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
@@ -36,6 +37,7 @@ class LxcContainer(db.Model):
     health_status = db.Column(db.String(16), default='healthy')
 
 class SystemConfig(db.Model):
+    """System configuration model for global application settings."""
     __tablename__ = 'system_config'
     id = db.Column(db.Integer, primary_key=True, default=1)
     subnet_range = db.Column(db.String(32), nullable=False)
@@ -47,12 +49,13 @@ class SystemConfig(db.Model):
     default_memory_limit = db.Column(db.Integer, default=64*1024*1024)  # 64MB
 
 class AuditLog(db.Model):
+    """Audit log model for tracking all admin actions."""
     __tablename__ = 'audit_logs'
     id = db.Column(db.Integer, primary_key=True)
     admin_id = db.Column(db.Integer, db.ForeignKey('admins.id'), nullable=False)
     action = db.Column(db.String(64), nullable=False)
     details = db.Column(db.Text)
-    ip_address = db.Column(INET)
+    ip_address = db.Column(db.String(45))  # SQLite compatible IP storage
     timestamp = db.Column(db.DateTime, default=func.now())
 
     admin = db.relationship('Admin', backref=db.backref('audit_logs', lazy=True))

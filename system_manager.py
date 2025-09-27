@@ -43,7 +43,20 @@ def apply_all_system_rules():
     """Restore bridge, IPs, and NAT rules on startup."""
     config = SystemConfig.query.first()
     if not config:
-        raise RuntimeError("SystemConfig not set")
+        # Create default config if none exists
+        config = SystemConfig(
+            subnet_range='172.16.100.0/24',
+            network_interface='eth0',
+            bridge_name='xenproxy0',
+            max_containers=254,
+            auto_assign_ips=True,
+            default_cpu_limit=0.1,
+            default_memory_limit=64*1024*1024  # 64MB
+        )
+        db.session.add(config)
+        db.session.commit()
+        print("Created default SystemConfig in system_manager")
+    
     setup_lxc_bridge(config.bridge_name, config.subnet_range)
     for container in LxcContainer.query.all():
         setup_nat_rule(container.ip_address)

@@ -40,11 +40,30 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  // Create container modal (stub)
+  // Create container modal logic
   const createBtn = document.getElementById("create-container-btn");
-  if (createBtn) {
+  const modal = document.getElementById("create-container-modal");
+  const closeModal = document.getElementById("close-create-modal");
+  const cancelModal = document.getElementById("cancel-create-modal");
+  if (createBtn && modal) {
     createBtn.addEventListener("click", function() {
-      showToast("Container creation modal not implemented in this stub.", "info");
+      modal.classList.remove("hidden");
+    });
+  }
+  if (closeModal && modal) {
+    closeModal.addEventListener("click", function() {
+      modal.classList.add("hidden");
+    });
+  }
+  if (cancelModal && modal) {
+    cancelModal.addEventListener("click", function() {
+      modal.classList.add("hidden");
+    });
+  }
+  // Optional: close modal on outside click
+  if (modal) {
+    modal.addEventListener("click", function(e) {
+      if (e.target === modal) modal.classList.add("hidden");
     });
   }
 });

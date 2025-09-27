@@ -1,5 +1,6 @@
 #!/bin/bash
-# LXC Multi-Protocol IP Gateway Admin Panel Automated Installer (Ubuntu/AlmaLinux, root compatible)
+# XenProxy LXC Multi-Protocol IP Gateway Admin Panel Installer (SQLite version)
+# Compatible with Ubuntu/Debian and AlmaLinux/CentOS/RHEL
 
 set -e
 
@@ -16,75 +17,41 @@ else
   exit 1
 fi
 
-echo "==> [1/8] Installing system dependencies..."
+echo "==> [1/7] Installing system dependencies..."
 if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
   apt-get update
-  apt-get install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute2 postgresql postgresql-client git curl
+  apt-get install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute2 git curl sqlite3
 elif [[ "$OS" == "almalinux" || "$OS" == "centos" || "$OS" == "rhel" ]]; then
-  dnf install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute postgresql-server postgresql git curl
-  postgresql-setup --initdb
-  systemctl enable postgresql
-  systemctl start postgresql
+  dnf install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute git curl sqlite
 else
   echo "Unsupported OS: $OS"
   exit 1
 fi
 
-echo "==> [2/8] Setting up Python virtual environment..."
+echo "==> [2/7] Setting up Python virtual environment..."
 python3 -m venv venv
 source venv/bin/activate
 
-echo "==> [3/8] Installing Python requirements..."
+echo "==> [3/7] Installing Python requirements..."
 pip install --upgrade pip
 pip install -r requirements.txt
-sed -i '/Flask-Limiter/d' requirements.txt
 
-echo "==> [4/8] Creating PostgreSQL database and user..."
-if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
-  systemctl enable postgresql
-  systemctl start postgresql
-  sudo -u postgres psql <<EOF
-DO \$\$
-BEGIN
-   IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ipgw') THEN
-      CREATE DATABASE ipgw;
-   END IF;
-   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres') THEN
-      CREATE USER postgres WITH PASSWORD 'postgres';
-   END IF;
-END
-\$\$;
-EOF
-elif [[ "$OS" == "almalinux" || "$OS" == "centos" || "$OS" == "rhel" ]]; then
-  sudo -u postgres psql <<EOF
-DO \$\$
-BEGIN
-   IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ipgw') THEN
-      CREATE DATABASE ipgw;
-   END IF;
-   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres') THEN
-      CREATE USER postgres WITH PASSWORD 'postgres';
-   END IF;
-END
-\$\$;
-EOF
-fi
-
-echo "==> [5/8] Setting up LXC bridge (br0) and network..."
-ip link add name br0 type bridge || true
-ip addr flush dev br0 || true
-ip addr add 203.0.113.1/24 dev br0 || true
-ip link set br0 up
+echo "==> [4/7] Setting up LXC bridge (xenproxy0) and network..."
+ip link add name xenproxy0 type bridge || true
+ip addr flush dev xenproxy0 || true
+ip addr add 172.16.100.1/24 dev xenproxy0 || true
+ip link set xenproxy0 up
 sysctl -w net.ipv4.ip_forward=1
-iptables -t nat -C POSTROUTING -s 203.0.113.0/24 -j MASQUERADE || iptables -t nat -A POSTROUTING -s 203.0.113.0/24 -j MASQUERADE
-echo "==> [5b/8] Ensuring LXC templates are up to date for all protocols (SSH, SOCKS5, HTTP, WireGuard)..."
+iptables -t nat -C POSTROUTING -s 172.16.100.0/24 -j MASQUERADE || iptables -t nat -A POSTROUTING -s 172.16.100.0/24 -j MASQUERADE
+
+echo "==> [4b/7] Ensuring LXC templates are up to date for all protocols (SSH, SOCKS5, HTTP, WireGuard)..."
 cp -f lxc-templates/alpine-config /var/lib/lxc/ || true
 cp -f lxc-templates/setup-services.sh /var/lib/lxc/ || true
 
-echo "==> [6/8] Creating folders for LXC templates and static assets..."
-mkdir -p lxc-templates static/css static/js
+echo "==> [5/7] Creating folders for LXC templates and static assets..."
+mkdir -p lxc-templates static/css static/js instance
 
-echo "==> [7/8] Copying default LXC templates and static assets if missing..."
+echo "==> [6/7] Copying default LXC templates and static assets if missing..."
 if [ ! -f lxc-templates/alpine-config ]; then
 cat > lxc-templates/alpine-config <<EOL
 lxc.include = /usr/share/lxc/config/alpine.common.conf
@@ -123,6 +90,9 @@ fi
 if [ "\$ENABLE_HTTP" = "true" ]; then
   apk add --no-cache tinyproxy
 fi
+if [ "\$ENABLE_WIREGUARD" = "true" ]; then
+  apk add --no-cache wireguard-tools
+fi
 rc-service sshd start 2>/dev/null || true
 rc-service danted start 2>/dev/null || true
 rc-service tinyproxy start 2>/dev/null || true
@@ -130,13 +100,24 @@ EOL
 chmod +x lxc-templates/setup-services.sh
 fi
 
-echo "==> [8/8] Initializing database tables..."
-export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
-python3 -c "from models import db; db.create_all()" || true
+echo "==> [7/7] Initializing SQLite database..."
+python3 init_db.py
 
+echo ""
 echo "==> Installation complete!"
+echo "==> Database Type: SQLite (stored in instance/ip_gateway.db)"
+echo "==> Default Admin Credentials:"
+echo "    Username: admin"
+echo "    Password: admin123"
+echo "    ⚠️  Please change these after first login!"
+echo ""
 echo "Starting the application..."
-nohup venv/bin/python app.py > xenproxy.log 2>&1 &
-echo "App started in background. To view logs: tail -f xenproxy.log"
-echo "To stop: pkill -f 'python app.py'"
-echo "To run as a service, see README.md for systemd instructions."
+nohup python3 app.py > xenproxy.log 2>&1 &
+echo "App started in background. Access it at: http://localhost:3030"
+echo ""
+echo "Useful commands:"
+echo "  View logs: tail -f xenproxy.log"
+echo "  Stop app:  pkill -f 'python3 app.py'"
+echo "  Restart:   ./install.sh"
+echo ""
+echo "To run as a systemd service, see service/xenproxy.service"

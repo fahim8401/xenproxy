@@ -39,14 +39,22 @@ def get_container_resources(container_name):
 
 def update_bandwidth_stats():
     """Update bandwidth_in/bandwidth_out for each container every 60s."""
+    from flask import current_app
     while True:
-        for container in LxcContainer.query.all():
-            # Example: parse /sys/class/net/vethX/statistics
-            # Here, just set dummy values
-            container.bandwidth_in += 0
-            container.bandwidth_out += 0
-            container.last_health_check = datetime.utcnow()
-            db.session.commit()
+        try:
+            with current_app.app_context():
+                containers = LxcContainer.query.all()
+                for container in containers:
+                    # Example: parse /sys/class/net/vethX/statistics
+                    # Here, just set dummy values for demonstration
+                    container.bandwidth_in += 0
+                    container.bandwidth_out += 0
+                    container.last_health_check = datetime.utcnow()
+                
+                db.session.commit()
+        except Exception as e:
+            print(f"Error updating bandwidth stats: {e}")
+        
         time.sleep(60)
 
 def check_container_health(container_name):

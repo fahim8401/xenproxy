@@ -1,47 +1,61 @@
 {% extends "base.html" %}
 {% block title %}Logs{% endblock %}
 {% block content %}
-<div class="container">
-  <h2>Audit Logs</h2>
-  <div class="log-controls">
-    <form method="get" action="{{ url_for('logs') }}">
-      <label for="date-range">Date Range:</label>
-      <input type="date" name="start_date">
-      <input type="date" name="end_date">
-      <label for="log-level">Log Level:</label>
-      <select name="log_level">
-        <option value="">All</option>
-        <option value="info">Info</option>
-        <option value="warning">Warning</option>
-        <option value="error">Error</option>
-      </select>
-      <input type="text" name="search" placeholder="Search by container or user">
-      <button class="btn" type="submit">Filter</button>
-      <a href="{{ url_for('logs') }}" class="btn">Clear</a>
-      <a href="{{ url_for('api_logs') }}" class="btn">Export CSV</a>
+<div class="container max-w-4xl mx-auto">
+  <h2 class="text-2xl font-bold mb-4">Audit Logs</h2>
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <form method="get" action="{{ url_for('logs') }}" class="flex flex-col md:flex-row md:items-end gap-4 flex-wrap">
+      <div>
+        <label for="start_date" class="block font-medium mb-1">Start Date</label>
+        <input type="date" name="start_date" class="border border-gray-300 rounded px-3 py-2">
+      </div>
+      <div>
+        <label for="end_date" class="block font-medium mb-1">End Date</label>
+        <input type="date" name="end_date" class="border border-gray-300 rounded px-3 py-2">
+      </div>
+      <div>
+        <label for="log_level" class="block font-medium mb-1">Log Level</label>
+        <select name="log_level" class="border border-gray-300 rounded px-3 py-2">
+          <option value="">All</option>
+          <option value="info">Info</option>
+          <option value="warning">Warning</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+      <div class="flex-1">
+        <label for="search" class="block font-medium mb-1">Search</label>
+        <input type="text" name="search" placeholder="Search by container or user" class="border border-gray-300 rounded px-3 py-2 w-full">
+      </div>
+      <div class="flex gap-2">
+        <button class="btn" type="submit">Filter</button>
+        <a href="{{ url_for('logs') }}" class="btn">Clear</a>
+        <a href="{{ url_for('api_logs') }}" class="btn">Export CSV</a>
+      </div>
     </form>
   </div>
-  <table class="admin-table">
-    <thead>
-      <tr>
-        <th>Timestamp</th>
-        <th>Admin</th>
-        <th>Action</th>
-        <th>Details</th>
-        <th>IP Address</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for log in logs %}
-      <tr>
-        <td>{{ log.timestamp }}</td>
-        <td>{{ log.admin.username }}</td>
-        <td>{{ log.action }}</td>
-        <td>{{ log.details }}</td>
-        <td>{{ log.ip_address }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="overflow-x-auto rounded shadow">
+    <table class="admin-table min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2">Timestamp</th>
+          <th class="px-4 py-2">Admin</th>
+          <th class="px-4 py-2">Action</th>
+          <th class="px-4 py-2">Details</th>
+          <th class="px-4 py-2">IP Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">{{ log.timestamp }}</td>
+          <td class="px-4 py-2">{{ log.admin.username }}</td>
+          <td class="px-4 py-2">{{ log.action }}</td>
+          <td class="px-4 py-2">{{ log.details }}</td>
+          <td class="px-4 py-2">{{ log.ip_address }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

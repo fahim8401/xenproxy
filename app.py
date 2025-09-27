@@ -13,21 +13,97 @@ from monitor import get_host_resources, get_container_resources, check_container
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_this_secret')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost/ipgw')
+
+# SQLite database configuration
+database_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'ip_gateway.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{database_path}')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SESSION_COOKIE_SECURE'] = True
+
+# SQLite specific configuration for better performance and concurrency
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_timeout': 20,
+    'pool_recycle': 300,
+    'pool_pre_ping': True,
+    'connect_args': {
+        'timeout': 20,
+        'check_same_thread': False  # Allow SQLite to be used across threads
+    }
+}
+
+# Only use secure cookies in production
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+
+# CSRF configuration - more lenient for development
+app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit
+app.config['WTF_CSRF_SSL_STRICT'] = False  # Allow over HTTP in development
 
 db.init_app(app)
 csrf = CSRFProtect(app)
 # Limiter removed for compatibility
 
-with app.app_context():
+def initialize_application():
+    """Initialize the application with database and default configuration."""
+    # Ensure instance directory exists
+    os.makedirs(os.path.dirname(database_path), exist_ok=True)
+    
+    # Create all database tables
     db.create_all()
-    apply_all_system_rules()
-    reconcile_db_with_lxc()
-    start_monitoring_thread()
+    print("✓ Database tables created/verified")
+    
+    # Create default SystemConfig if none exists
+    if not SystemConfig.query.first():
+        default_config = SystemConfig(
+            subnet_range='172.16.100.0/24',
+            network_interface='eth0',
+            bridge_name='xenproxy0',
+            max_containers=254,
+            auto_assign_ips=True,
+            default_cpu_limit=0.1,
+            default_memory_limit=64*1024*1024  # 64MB
+        )
+        db.session.add(default_config)
+        db.session.commit()
+        print("✓ Created default SystemConfig")
+    else:
+        print("✓ SystemConfig exists")
+    
+    # Ensure at least one admin user exists
+    from auth import create_admin
+    if not Admin.query.first():
+        try:
+            create_admin('admin', 'admin1234')
+            print("✓ Created default admin user (admin/admin1234)")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not create default admin user: {e}")
+    else:
+        print("✓ Admin user exists")
+
+    # Apply system rules (with error handling for development environments)
+    try:
+        apply_all_system_rules()
+        print("✓ System rules applied")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not apply system rules: {e}")
+    
+    # Reconcile database with LXC (with error handling)
+    try:
+        reconcile_db_with_lxc()
+        print("✓ Database reconciled with LXC")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not reconcile with LXC: {e}")
+    
+    # Start monitoring thread
+    try:
+        start_monitoring_thread()
+        print("✓ Monitoring thread started")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not start monitoring: {e}")
+
+with app.app_context():
+    initialize_application()
 
 @app.route('/login', methods=['GET', 'POST'])
+@csrf.exempt  # Exempt login from CSRF protection
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -37,7 +113,16 @@ def login():
             session['admin_id'] = admin.id
             admin.last_login = datetime.utcnow()
             db.session.commit()
-            AuditLog(admin_id=admin.id, action='login', details='Admin logged in', ip_address=request.remote_addr).save()
+            
+            # Log the admin login
+            audit_log = AuditLog(admin_id=admin.id, action='login', details='Admin logged in', ip_address=request.remote_addr)
+            db.session.add(audit_log)
+            db.session.commit()
+            
+            # Handle redirect after login - check both URL parameter and session
+            next_page = request.args.get('next') or session.pop('next_url', None)
+            if next_page and next_page.startswith('/'):  # Security: only allow relative URLs
+                return redirect(next_page)
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid credentials', 'danger')
@@ -54,7 +139,8 @@ def logout():
 def dashboard():
     containers = LxcContainer.query.all()
     host_stats = get_host_resources()
-    return render_template('dashboard.html', containers=containers, host_stats=host_stats)
+    system_config = SystemConfig.query.first()
+    return render_template('dashboard.html', containers=containers, host_stats=host_stats, system_config=system_config)
 
 @app.route('/containers')
 @login_required
@@ -84,7 +170,12 @@ def create_container_route():
         "wireguard": 'enable_wireguard' in data,
     }
     create_container(username, ip_address, ssh_key, protocols)
-    AuditLog(admin_id=session['admin_id'], action='create_container', details=f'Created {username}', ip_address=request.remote_addr).save()
+    
+    # Log the container creation
+    audit_log = AuditLog(admin_id=session['admin_id'], action='create_container', details=f'Created {username}', ip_address=request.remote_addr)
+    db.session.add(audit_log)
+    db.session.commit()
+    
     flash('Container created', 'success')
     return redirect(url_for('containers'))
 
@@ -92,7 +183,12 @@ def create_container_route():
 @login_required
 def delete_container_route(name):
     delete_container(name)
-    AuditLog(admin_id=session['admin_id'], action='delete_container', details=f'Deleted {name}', ip_address=request.remote_addr).save()
+    
+    # Log the container deletion
+    audit_log = AuditLog(admin_id=session['admin_id'], action='delete_container', details=f'Deleted {name}', ip_address=request.remote_addr)
+    db.session.add(audit_log)
+    db.session.commit()
+    
     flash('Container deleted', 'success')
     return redirect(url_for('containers'))
 
@@ -100,7 +196,12 @@ def delete_container_route(name):
 @login_required
 def start_container_route(name):
     start_container(name)
-    AuditLog(admin_id=session['admin_id'], action='start_container', details=f'Started {name}', ip_address=request.remote_addr).save()
+    
+    # Log the container start
+    audit_log = AuditLog(admin_id=session['admin_id'], action='start_container', details=f'Started {name}', ip_address=request.remote_addr)
+    db.session.add(audit_log)
+    db.session.commit()
+    
     flash('Container started', 'success')
     return redirect(url_for('containers'))
 
@@ -108,7 +209,12 @@ def start_container_route(name):
 @login_required
 def stop_container_route(name):
     stop_container(name)
-    AuditLog(admin_id=session['admin_id'], action='stop_container', details=f'Stopped {name}', ip_address=request.remote_addr).save()
+    
+    # Log the container stop
+    audit_log = AuditLog(admin_id=session['admin_id'], action='stop_container', details=f'Stopped {name}', ip_address=request.remote_addr)
+    db.session.add(audit_log)
+    db.session.commit()
+    
     flash('Container stopped', 'success')
     return redirect(url_for('containers'))
 

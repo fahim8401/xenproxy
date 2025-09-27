@@ -22,12 +22,12 @@
     </tbody>
   </table>
   <h3>Add New Admin</h3>
-  <form method="post" action="{{ url_for('add_admin') }}">
+  <!-- <form method="post" action="{{ url_for('add_admin') }}"> -->
     <label for="username">Username</label>
     <input type="text" name="username" required pattern="^[a-z][a-z0-9_]{2,30}$">
     <label for="password">Password</label>
     <input type="password" name="password" required minlength="8">
     <button class="btn" type="submit">Add Admin</button>
-  </form>
+  <!-- </form> -->
 </div>
 {% endblock %}

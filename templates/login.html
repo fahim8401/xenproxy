@@ -1,69 +1,201 @@
-{% extends "base.html" %}
+{% extends "base_login.html" %}
 
-{% block title %}Login - IP Gateway Admin{% endblock %}
-
-{% block page_title %}Admin Login{% endblock %}
+{% block title %}Login - XenProxy Gateway{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-    <div class="text-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">IP Gateway Admin</h1>
-        <p class="text-gray-600 mt-2">Please sign in to continue</p>
+<div class="w-full max-w-md mx-auto">
+    <!-- Login Card -->
+    <div class="glass rounded-2xl shadow-2xl p-8 float">
+        <!-- Logo and Header -->
+        <div class="text-center mb-8">
+            <div class="logo-pulse mb-4">
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-lg">
+                    <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">XenProxy</h1>
+            <p class="text-white/80 text-sm">LXC Multi-Protocol Gateway</p>
+            <p class="text-white/60 text-xs mt-1">Admin Portal</p>
+        </div>
+
+        <!-- Login Form -->
+        <form method="POST" class="space-y-6" id="loginForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Username Field -->
+            <div>
+
+                    <form method="POST" class="space-y-6" id="loginForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div>
+                            <label for="username" class="block text-white/80 font-semibold mb-2">Username</label>
+                            <input type="text" name="username" id="username" required autofocus autocomplete="username" class="w-full px-4 py-3 rounded-lg bg-white/20 text-white/90 border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/30 transition-all" placeholder="Enter your username">
+                        </div>
+                        <div class="relative">
+                            <label for="password" class="block text-white/80 font-semibold mb-2">Password</label>
+                            <input type="password" name="password" id="password" required autocomplete="current-password" class="w-full px-4 py-3 rounded-lg bg-white/20 text-white/90 border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/30 transition-all" placeholder="Enter your password">
+                            <button type="button" id="togglePassword" title="Toggle password visibility" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn-primary w-full py-3 px-4 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/30">
+                            Login
+                        </button>
+                    </form>
+                    <div class="mt-6 text-center text-white/70 text-xs">
+                        &copy; {{ now().year }} XenProxy Admin Panel
+                    </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitBtn"
+                    class="btn-primary w-full py-3 px-4 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/30">
+                <span id="submitText">Sign In</span>
+                <svg id="loadingIcon" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden inline" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </form>
+
+        <!-- Additional Info -->
+        <div class="mt-8 pt-6 border-t border-white/20">
+            <div class="text-center">
+                <div class="bg-white/10 rounded-lg p-4 mb-4">
+                    <p class="text-white/90 text-sm font-medium mb-2">Default Credentials:</p>
+                    <div class="space-y-1">
+                        <p class="text-white/80 text-sm">Username: <code class="bg-white/20 px-2 py-1 rounded text-xs">admin</code></p>
+                        <p class="text-white/80 text-sm">Password: <code class="bg-white/20 px-2 py-1 rounded text-xs">admin123</code></p>
+                    </div>
+                </div>
+                <p class="text-white/60 text-xs">
+                    <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    Please change default password after first login
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 pt-4 border-t border-white/10">
+            <p class="text-white/50 text-xs">
+                © 2025 XenProxy Gateway. Secure Container Management.
+            </p>
+        </div>
     </div>
 
-    <form method="POST" class="space-y-4">
-        <div>
-            <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-            <input type="text" id="username" name="username" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="Enter your username">
+    <!-- Features Info -->
+    <div class="mt-8 grid grid-cols-3 gap-4 text-center">
+        <div class="glass rounded-lg p-3">
+            <svg class="w-8 h-8 text-white mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <p class="text-white/80 text-xs">Secure</p>
         </div>
-
-        <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-            <input type="password" id="password" name="password" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="Enter your password">
+        <div class="glass rounded-lg p-3">
+            <svg class="w-8 h-8 text-white mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+            </svg>
+            <p class="text-white/80 text-xs">Multi-Protocol</p>
         </div>
-
-        <div class="flex items-center">
-            <input type="checkbox" id="remember" name="remember"
-                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-            <label for="remember" class="ml-2 block text-sm text-gray-900">
-                Remember me
-            </label>
+        <div class="glass rounded-lg p-3">
+            <svg class="w-8 h-8 text-white mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+            </svg>
+            <p class="text-white/80 text-xs">Fast</p>
         </div>
-
-        <button type="submit"
-                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Sign In
-        </button>
-    </form>
-
-    <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
-            Default credentials: admin / admin123
-        </p>
-        <p class="text-xs text-gray-500 mt-2">
-            Change password after first login
-        </p>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 // Auto-focus username field
 document.getElementById('username').focus();
 
-// Handle form submission with basic validation
-document.querySelector('form').addEventListener('submit', function(e) {
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordField = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        eyeIcon.innerHTML = `
+            <path d="M17.94 17.94A10.07 10.07 0 01.66 2.66l1.27-1.27a1 1 0 111.41 1.41L15.34 15.8a10.07 10.07 0 01-15.6-5.8 1 1 0 010-.2 10.07 10.07 0 013.3-4.9l1.42 1.41A7.94 7.94 0 002 10a8 8 0 0012.58 6.58l1.36 1.36a1 1 0 001.41-1.41L17.94 17.94zM12.58 3.42A8 8 0 002 10a1 1 0 010-.2 8 8 0 0110.58-6.38z"/>
+        `;
+    } else {
+        passwordField.type = 'password';
+        eyeIcon.innerHTML = `
+            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+        `;
+    }
+});
+
+// Form submission with loading state
+document.getElementById('loginForm').addEventListener('submit', function(e) {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-
+    
     if (!username || !password) {
         e.preventDefault();
-        alert('Please fill in all fields');
+        showError('Please fill in all fields');
         return false;
     }
+    
+    // Show loading state
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const loadingIcon = document.getElementById('loadingIcon');
+    
+    submitBtn.disabled = true;
+    submitText.textContent = 'Signing In...';
+    loadingIcon.classList.remove('hidden');
+    
+    // Re-enable button after 5 seconds in case of network issues
+    setTimeout(() => {
+        submitBtn.disabled = false;
+        submitText.textContent = 'Sign In';
+        loadingIcon.classList.add('hidden');
+    }, 5000);
+});
+
+function showError(message) {
+    // Create temporary error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'fixed top-4 right-4 z-50 px-6 py-3 bg-red-500 text-white rounded-lg shadow-lg max-w-sm';
+    errorDiv.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            ${message}
+        </div>
+    `;
+    document.body.appendChild(errorDiv);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.parentNode.removeChild(errorDiv);
+        }
+    }, 3000);
+}
+
+// Input animation effects
+document.querySelectorAll('.input-field').forEach(input => {
+    input.addEventListener('focus', function() {
+        this.parentElement.querySelector('label').style.color = 'white';
+    });
+    
+    input.addEventListener('blur', function() {
+        if (!this.value) {
+            this.parentElement.querySelector('label').style.color = 'rgba(255, 255, 255, 0.8)';
+        }
+    });
 });
 </script>
 {% endblock %}

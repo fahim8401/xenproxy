@@ -24,7 +24,9 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'admin_id' not in session:
-            return redirect(url_for('login', next=request.url))
+            # Store the intended destination in the session instead of URL parameter
+            session['next_url'] = request.url
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
