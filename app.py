@@ -1,8 +1,6 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
 from models import db, Admin, LxcContainer, SystemConfig, AuditLog, LxcTemplate
@@ -11,8 +9,43 @@ from lxc_manager import create_container, delete_container, start_container, sto
 from system_manager import setup_lxc_bridge, apply_all_system_rules, reconcile_db_with_lxc
 from monitor import get_host_resources, get_container_resources, check_container_health, detect_abuse, start_monitoring_thread
 
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed, skip
+
+# Configure logging
+import logging
+from logging.handlers import RotatingFileHandler
+
+log_level = getattr(logging, os.environ.get('LOG_LEVEL', 'INFO').upper())
+log_file = os.environ.get('LOG_FILE', 'xenproxy.log')
+
+# Create logs directory if it doesn't exist
+os.makedirs('logs', exist_ok=True)
+
+# Configure root logger
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        RotatingFileHandler(f'logs/{log_file}', maxBytes=10*1024*1024, backupCount=5),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_this_secret')
+
+# Production-ready configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 
 # SQLite database configuration
 database_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'ip_gateway.db')
@@ -21,17 +54,25 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # SQLite specific configuration for better performance and concurrency
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_timeout': 20,
+    'pool_timeout': 30,
     'pool_recycle': 300,
     'pool_pre_ping': True,
     'connect_args': {
-        'timeout': 20,
+        'timeout': 30,
         'check_same_thread': False  # Allow SQLite to be used across threads
     }
 }
 
-# Only use secure cookies in production
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+# Production security settings
+if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('PRODUCTION') == 'true':
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+    if not app.config['SECRET_KEY'] or app.config['SECRET_KEY'] == 'dev-secret-change-in-production':
+        raise ValueError("SECRET_KEY environment variable must be set in production!")
+    
+    # Additional production settings
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file upload
 
 # CSRF configuration - more lenient for development
 app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit
@@ -759,4 +800,10 @@ def api_duplicate_template(template_id):
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3030, debug=False)
+    # Production-ready server configuration
+    host = os.environ.get('HOST', '127.0.0.1')
+    port = int(os.environ.get('PORT', 3030))
+    debug = os.environ.get('FLASK_ENV') != 'production' and os.environ.get('DEBUG', 'false').lower() == 'true'
+    
+    logger.info(f"Starting XenProxy server on {host}:{port} (debug={debug})")
+    app.run(host=host, port=port, debug=debug, threaded=True)
