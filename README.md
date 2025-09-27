@@ -59,14 +59,23 @@ templates/
     # or: su - && ./install.sh
     ```
 
-2. **Run the app:**
+2. **If you see "could not change directory to ... Permission denied" or "ERROR:  CREATE DATABASE cannot be executed from a function":**
+    - This is a PostgreSQL limitation: `CREATE DATABASE` cannot be run inside a DO block.
+    - If the database does not exist, create it manually:
+      ```bash
+      sudo -u postgres createdb ipgw
+      sudo -u postgres psql -c "CREATE USER postgres WITH PASSWORD 'postgres';" || true
+      ```
+    - Then re-run `sudo ./install.sh` to continue.
+
+3. **Run the app:**
     ```bash
     source venv/bin/activate
     export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
-    python3 app.py
+    python app.py
     ```
 
-3. **Access the admin panel:**  
+4. **Access the admin panel:**  
    [http://localhost:3030](http://localhost:3030)
 
 ---
