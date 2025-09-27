@@ -37,6 +37,7 @@ source venv/bin/activate
 echo "==> [3/8] Installing Python requirements..."
 pip install --upgrade pip
 pip install -r requirements.txt
+sed -i '/Flask-Limiter/d' requirements.txt
 
 echo "==> [4/8] Creating PostgreSQL database and user..."
 if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then

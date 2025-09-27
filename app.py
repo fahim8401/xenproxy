@@ -1,8 +1,8 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+# from flask_limiter import Limiter
+# from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
 from models import db, Admin, LxcContainer, SystemConfig, AuditLog
@@ -19,10 +19,7 @@ app.config['SESSION_COOKIE_SECURE'] = True
 
 db.init_app(app)
 csrf = CSRFProtect(app)
-limiter = Limiter(app, key_func=get_remote_address, default_limits=["100 per minute"])
-# For Flask-Limiter >=3.x, use:
-# limiter = Limiter(key_func=get_remote_address, default_limits=["100 per minute"])
-# limiter.init_app(app)
+# Limiter removed for compatibility
 
 @app.before_first_request
 def setup():
@@ -32,7 +29,6 @@ def setup():
     start_monitoring_thread()
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
