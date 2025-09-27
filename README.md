@@ -11,6 +11,7 @@ A lightweight, production-ready LXC container management system with multi-proto
 
 - **Container Management**: Create, start, stop, delete LXC containers
 - **Multi-Protocol Support**: SSH, SOCKS5, HTTP proxy, WireGuard
+- **Flexible Authentication**: SSH key or password authentication for containers
 - **SQLite Database**: Lightweight, serverless database with no external dependencies
 - **Web Admin Panel**: Clean, responsive web interface (Flask + Tailwind CSS)
 - **Resource Monitoring**: CPU, memory, disk, and network statistics

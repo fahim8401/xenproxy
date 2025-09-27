@@ -8,6 +8,7 @@ import sys
 from flask import Flask
 from models import db, SystemConfig, Admin
 from auth import create_admin
+from migrate_password import migrate
 
 def init_database():
     """Initialize the database with default configuration and admin user."""
@@ -37,6 +38,10 @@ def init_database():
         
         print("Creating database tables...")
         db.create_all()
+        
+        # Run migrations
+        print("Running database migrations...")
+        migrate()
         
         # Create default SystemConfig if none exists
         if not SystemConfig.query.first():

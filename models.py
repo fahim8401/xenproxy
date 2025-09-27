@@ -31,6 +31,7 @@ class LxcContainer(db.Model):
     enable_http = db.Column(db.Boolean, default=False)
     enable_wireguard = db.Column(db.Boolean, default=False)
     ssh_public_key = db.Column(db.Text)
+    password = db.Column(db.String(128))  # For password authentication
     bandwidth_in = db.Column(db.BigInteger, default=0)
     bandwidth_out = db.Column(db.BigInteger, default=0)
     last_health_check = db.Column(db.DateTime)

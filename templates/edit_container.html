@@ -24,8 +24,27 @@
       </div>
       
       <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Authentication Method</label>
+        <div class="space-y-2">
+          <label class="flex items-center">
+            <input type="radio" name="auth_method" value="ssh" {% if container.ssh_public_key %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" id="edit_auth_ssh">
+            <span class="ml-2 text-sm">SSH Key Authentication</span>
+          </label>
+          <label class="flex items-center">
+            <input type="radio" name="auth_method" value="password" {% if container.password %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" id="edit_auth_password">
+            <span class="ml-2 text-sm">Password Authentication</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="mb-6" id="edit_ssh_key_section" {% if not container.ssh_public_key %}style="display: none;"{% endif %}>
         <label class="block text-sm font-medium text-gray-700 mb-2">SSH Public Key</label>
-        <textarea name="ssh_public_key" class="w-full border border-gray-300 rounded px-3 py-2" rows="3" required>{{ container.ssh_public_key or '' }}</textarea>
+        <textarea name="ssh_public_key" class="w-full border border-gray-300 rounded px-3 py-2" rows="3">{{ container.ssh_public_key or '' }}</textarea>
+      </div>
+      
+      <div class="mb-6" id="edit_password_section" {% if not container.password %}style="display: none;"{% endif %}>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+        <input type="password" name="password" value="{{ container.password or '' }}" class="w-full border border-gray-300 rounded px-3 py-2">
       </div>
       
       <div class="mb-6">
@@ -74,4 +93,26 @@
     </form>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const authSsh = document.getElementById('edit_auth_ssh');
+    const authPassword = document.getElementById('edit_auth_password');
+    const sshSection = document.getElementById('edit_ssh_key_section');
+    const passwordSection = document.getElementById('edit_password_section');
+    
+    function toggleAuthSections() {
+        if (authSsh.checked) {
+            sshSection.style.display = 'block';
+            passwordSection.style.display = 'none';
+        } else {
+            passwordSection.style.display = 'block';
+            sshSection.style.display = 'none';
+        }
+    }
+    
+    authSsh.addEventListener('change', toggleAuthSections);
+    authPassword.addEventListener('change', toggleAuthSections);
+});
+</script>
 {% endblock %}

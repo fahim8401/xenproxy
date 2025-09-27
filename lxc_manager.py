@@ -18,7 +18,7 @@ def run_command(cmd, check=True):
         raise RuntimeError(result.stderr)
     return result.stdout.strip()
 
-def create_container(username, ip_address, ssh_key, protocols):
+def create_container(username, ip_address, ssh_key, protocols, password=None, auth_method='ssh'):
     """Create and configure a new unprivileged LXC container."""
     container_name = f"ipgw-{username}"
     config = SystemConfig.query.first()
@@ -52,6 +52,8 @@ def create_container(username, ip_address, ssh_key, protocols):
         "CONTAINER_IP": ip_address,
         "USERNAME": username,
         "SSH_KEY": ssh_key or "",
+        "PASSWORD": password or "",
+        "AUTH_METHOD": auth_method,
     }
     setup_script_path = os.path.abspath(SETUP_SCRIPT)
     run_command(f"lxc-start -n {container_name}")
@@ -72,7 +74,8 @@ def create_container(username, ip_address, ssh_key, protocols):
         enable_socks5=protocols.get("socks5", False),
         enable_http=protocols.get("http", False),
         enable_wireguard=protocols.get("wireguard", False),
-        ssh_public_key=ssh_key,
+        ssh_public_key=ssh_key if auth_method == 'ssh' else None,
+        password=password if auth_method == 'password' else None,
         health_status="healthy"
     )
     db.session.add(container)

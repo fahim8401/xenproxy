@@ -168,29 +168,6 @@ def container_detail(name):
     stats = get_container_resources(name)
     return render_template('container_detail.html', container=container, info=info, stats=stats)
 
-@app.route('/containers/create', methods=['POST'])
-@login_required
-def create_container_route():
-    data = request.form
-    username = data['username']
-    ip_address = data['ip_address']
-    ssh_key = data['ssh_public_key']
-    protocols = {
-        "ssh": 'enable_ssh' in data,
-        "socks5": 'enable_socks5' in data,
-        "http": 'enable_http' in data,
-        "wireguard": 'enable_wireguard' in data,
-    }
-    create_container(username, ip_address, ssh_key, protocols)
-    
-    # Log the container creation
-    audit_log = AuditLog(admin_id=session['admin_id'], action='create_container', details=f'Created {username}', ip_address=request.remote_addr)
-    db.session.add(audit_log)
-    db.session.commit()
-    
-    flash('Container created', 'success')
-    return redirect(url_for('containers'))
-
 @app.route('/containers/create', methods=['GET', 'POST'])
 @login_required
 def create_container_page():
@@ -198,14 +175,25 @@ def create_container_page():
         data = request.form
         username = data['username']
         ip_address = data['ip_address']
-        ssh_key = data['ssh_public_key']
+        auth_method = data.get('auth_method', 'ssh')
+        ssh_key = data.get('ssh_public_key', '')
+        password = data.get('password', '')
+        
+        # Validate authentication
+        if auth_method == 'ssh' and not ssh_key.strip():
+            flash('SSH public key is required for SSH authentication', 'danger')
+            return redirect(request.url)
+        elif auth_method == 'password' and not password:
+            flash('Password is required for password authentication', 'danger')
+            return redirect(request.url)
+        
         protocols = {
             "ssh": 'enable_ssh' in data,
             "socks5": 'enable_socks5' in data,
             "http": 'enable_http' in data,
             "wireguard": 'enable_wireguard' in data,
         }
-        create_container(username, ip_address, ssh_key, protocols)
+        create_container(username, ip_address, ssh_key, password, auth_method, protocols)
         
         # Log the container creation
         audit_log = AuditLog(admin_id=session['admin_id'], action='create_container', details=f'Created {username}', ip_address=request.remote_addr)
@@ -224,9 +212,22 @@ def edit_container_page(name):
     
     if request.method == 'POST':
         data = request.form
+        auth_method = data.get('auth_method', 'ssh')
+        ssh_key = data.get('ssh_public_key', '')
+        password = data.get('password', '')
+        
+        # Validate authentication
+        if auth_method == 'ssh' and not ssh_key.strip():
+            flash('SSH public key is required for SSH authentication', 'danger')
+            return redirect(request.url)
+        elif auth_method == 'password' and not password:
+            flash('Password is required for password authentication', 'danger')
+            return redirect(request.url)
+        
         container.username = data['username']
         container.ip_address = data['ip_address']
-        container.ssh_public_key = data['ssh_public_key']
+        container.ssh_public_key = ssh_key if auth_method == 'ssh' else None
+        container.password = password if auth_method == 'password' else None
         container.enable_ssh = 'enable_ssh' in data
         container.enable_socks5 = 'enable_socks5' in data
         container.enable_http = 'enable_http' in data

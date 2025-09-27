@@ -4,12 +4,19 @@
 if [ "$ENABLE_SSH" = "true" ]; then
   apk add --no-cache openssh
   echo "PermitRootLogin no" >> /etc/ssh/sshd_config
-  echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
   echo "ListenAddress $CONTAINER_IP" >> /etc/ssh/sshd_config
-  adduser -D -s /bin/sh $USERNAME
-  mkdir -p /home/$USERNAME/.ssh
-  echo "$SSH_KEY" > /home/$USERNAME/.ssh/authorized_keys
-  chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
+  
+  if [ "$AUTH_METHOD" = "ssh" ]; then
+    echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+    adduser -D -s /bin/sh $USERNAME
+    mkdir -p /home/$USERNAME/.ssh
+    echo "$SSH_KEY" > /home/$USERNAME/.ssh/authorized_keys
+    chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
+  elif [ "$AUTH_METHOD" = "password" ]; then
+    echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+    adduser -D -s /bin/sh $USERNAME
+    echo "$USERNAME:$PASSWORD" | chpasswd
+  fi
 fi
 
 if [ "$ENABLE_SOCKS5" = "true" ]; then
