@@ -1,0 +1,66 @@
+2025-09-27 23:31:23,720 - __main__ - INFO - Created initial admin user
+2025-09-27 23:31:23,720 - system_manager - INFO - Applying all system rules on startup...
+2025-09-27 23:31:23,725 - system_manager - INFO - System rules applied successfully
+2025-09-27 23:31:23,799 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.196:5000
+2025-09-27 23:31:23,799 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-27 23:31:48,727 - system_manager - INFO - Applying all system rules on startup...
+2025-09-27 23:31:48,731 - system_manager - INFO - System rules applied successfully
+2025-09-27 23:31:48,805 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.196:5000
+2025-09-27 23:31:48,806 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-27 23:32:01,569 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:01] "[32mGET / HTTP/1.1[0m" 302 -
+2025-09-27 23:32:06,004 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:06] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:32:23,624 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:23] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:32:23,723 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:23] "GET /static/js/dashboard.js HTTP/1.1" 200 -
+2025-09-27 23:32:23,725 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:23] "GET /static/css/style.css HTTP/1.1" 200 -
+2025-09-27 23:32:24,451 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:24] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-09-27 23:32:30,153 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:30] "[32mGET /dashboard HTTP/1.1[0m" 302 -
+2025-09-27 23:32:30,165 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:30] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:32:30,220 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:30] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-27 23:32:30,223 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:30] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:32:32,010 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:32] "[32mGET /dashboard HTTP/1.1[0m" 302 -
+2025-09-27 23:32:32,020 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:32] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:32:32,066 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:32] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-27 23:32:32,078 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:32:32] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:37:53,692 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:53] "[32mGET / HTTP/1.1[0m" 302 -
+2025-09-27 23:37:53,705 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:53] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:37:53,763 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:53] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-27 23:37:53,766 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:53] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:37:58,601 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:58] "[32mGET /dashboard HTTP/1.1[0m" 302 -
+2025-09-27 23:37:58,618 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:58] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:37:58,660 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:58] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-27 23:37:58,666 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:37:58] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:38:08,264 - __main__ - INFO - Admin admin logged in
+2025-09-27 23:38:08,265 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:08] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-09-27 23:38:08,302 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:08] "GET /dashboard HTTP/1.1" 200 -
+2025-09-27 23:38:08,341 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:08] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-27 23:38:08,349 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:08] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:38:25,983 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:25] "GET /dashboard HTTP/1.1" 200 -
+2025-09-27 23:38:26,032 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:26] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-27 23:38:26,036 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:26] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:38:28,332 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:28] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-09-27 23:38:28,344 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:28] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:38:28,398 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:28] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-09-27 23:38:28,402 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:38:28] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:40:01,978 - system_manager - INFO - Applying all system rules on startup...
+2025-09-27 23:40:01,981 - system_manager - INFO - System rules applied successfully
+2025-09-27 23:41:02,085 - system_manager - INFO - Applying all system rules on startup...
+2025-09-27 23:41:02,087 - system_manager - INFO - System rules applied successfully
+2025-09-27 23:41:11,596 - system_manager - INFO - Applying all system rules on startup...
+2025-09-27 23:41:11,599 - system_manager - INFO - System rules applied successfully
+2025-09-27 23:41:27,196 - system_manager - INFO - Applying all system rules on startup...
+2025-09-27 23:41:27,198 - system_manager - INFO - System rules applied successfully
+2025-09-27 23:41:27,271 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.0.196:5001
+2025-09-27 23:41:27,271 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-27 23:42:02,062 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:42:02] "[32mGET / HTTP/1.1[0m" 302 -
+2025-09-27 23:42:02,070 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:42:02] "GET /login HTTP/1.1" 200 -
+2025-09-27 23:42:02,132 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:42:02] "[36mGET /static/js/dashboard.js HTTP/1.1[0m" 304 -
+2025-09-27 23:42:02,135 - werkzeug - INFO - 127.0.0.1 - - [27/Sep/2025 23:42:02] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -

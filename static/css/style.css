@@ -1,0 +1,277 @@
+/* Custom styles for IP Gateway Admin Dashboard */
+
+/* Toggle Switch Styles */
+.toggle-checkbox:checked {
+    right: 0;
+    border-color: #68D391;
+}
+
+.toggle-checkbox:checked + .toggle-label {
+    background-color: #68D391;
+}
+
+.toggle-checkbox:checked + .toggle-label:before {
+    transform: translateX(16px);
+}
+
+.toggle-label {
+    transition: background-color 0.2s;
+}
+
+.toggle-label:before {
+    content: "";
+    display: block;
+    width: 16px;
+    height: 16px;
+    background: white;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.status-running {
+    background-color: #48BB78;
+    box-shadow: 0 0 6px rgba(72, 187, 120, 0.5);
+}
+
+.status-stopped {
+    background-color: #F56565;
+    box-shadow: 0 0 6px rgba(245, 101, 101, 0.5);
+}
+
+.status-loading {
+    background-color: #ED8936;
+    box-shadow: 0 0 6px rgba(237, 137, 54, 0.5);
+    animation: pulse 2s infinite;
+}
+
+/* Protocol Icons */
+.protocol-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 4px;
+}
+
+.protocol-ssh {
+    background-color: #4299E1;
+    color: white;
+}
+
+.protocol-socks5 {
+    background-color: #48BB78;
+    color: white;
+}
+
+.protocol-http {
+    background-color: #ED8936;
+    color: white;
+}
+
+.protocol-pptp {
+    background-color: #9F7AEA;
+    color: white;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #E2E8F0;
+    border-radius: 50%;
+    border-top-color: #4299E1;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Table Enhancements */
+.table-hover tr:hover {
+    background-color: #F7FAFC;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Form Enhancements */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-control:focus {
+    border-color: #4299E1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Button Enhancements */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+/* Modal Enhancements */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Alert Enhancements */
+.alert {
+    border-radius: 6px;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    border-left-color: #48BB78;
+}
+
+.alert-error {
+    border-left-color: #F56565;
+}
+
+.alert-warning {
+    border-left-color: #ED8936;
+}
+
+.alert-info {
+    border-left-color: #4299E1;
+}
+
+/* Card Enhancements */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Badge Enhancements */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.375rem;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .grid-cols-4 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
+    .text-2xl {
+        font-size: 1.5rem;
+    }
+
+    .p-6 {
+        padding: 1rem;
+    }
+}
+
+/* Dark Mode Support (future enhancement) */
+@media (prefers-color-scheme: dark) {
+    .bg-gray-100 {
+        background-color: #1A202C;
+    }
+
+    .text-gray-900 {
+        color: #F7FAFC;
+    }
+
+    .text-gray-600 {
+        color: #A0AEC0;
+    }
+
+    .bg-white {
+        background-color: #2D3748;
+        color: #F7FAFC;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+    }
+}
