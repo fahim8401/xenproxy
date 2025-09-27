@@ -9,6 +9,24 @@ A lightweight, production-ready LXC container management system with multi-proto
 
 ## 🏃‍♂️ Running the Application
 
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/fahim8401/xenproxy.git
+cd xenproxy
+
+# Run the installer (requires root)
+sudo ./install.sh
+```
+
+### Installation Options
+```bash
+./install.sh              # Install XenProxy
+./install.sh --remove     # Remove XenProxy (keep database)
+./install.sh --full-remove # Remove XenProxy completely (including database)
+./install.sh --help       # Show help
+```
+
 ### Development Mode (Recommended for testing)
 ```bash
 # Install dependencies
