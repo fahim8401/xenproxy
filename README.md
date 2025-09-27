@@ -1,6 +1,6 @@
 # LXC Multi-Protocol IP Gateway Admin Panel
 
-A production-ready Python Flask application for managing a secure, multi-protocol IP gateway using LXC containers. All monitoring, management, and configuration are accessible through a custom admin panel.
+A production-ready Python Flask application for managing a secure, multi-protocol IP gateway using **LXC containers** (one per IP address). All monitoring, management, and configuration are accessible through a custom admin panel—no external monitoring tools required.
 
 ---
 

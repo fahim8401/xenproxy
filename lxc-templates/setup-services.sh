@@ -14,12 +14,33 @@ fi
 
 if [ "$ENABLE_SOCKS5" = "true" ]; then
   apk add --no-cache dante-server
-  # TODO: Configure Dante with username/password
+  cat > /etc/dante.conf <<EOF
+logoutput: syslog
+internal: 0.0.0.0 port = 1080
+external: $CONTAINER_IP
+method: username none
+user.notprivileged: nobody
+client pass {
+  from: 0.0.0.0/0 to: 0.0.0.0/0
+  log: connect disconnect error
+}
+socks pass {
+  from: 0.0.0.0/0 to: 0.0.0.0/0
+  command: bind connect udpassociate
+  log: connect disconnect error
+}
+EOF
+  adduser -D -s /bin/sh socksuser
+  echo "socksuser:$(openssl rand -base64 12)" | chpasswd
 fi
 
 if [ "$ENABLE_HTTP" = "true" ]; then
   apk add --no-cache tinyproxy
-  # TODO: Configure TinyProxy with basic auth
+  sed -i 's/^Allow /#Allow /' /etc/tinyproxy/tinyproxy.conf
+  sed -i 's/^#BasicAuth user password/BasicAuth httpuser $(openssl rand -base64 12)/' /etc/tinyproxy/tinyproxy.conf
+  sed -i 's/^Port .*/Port 8080/' /etc/tinyproxy/tinyproxy.conf
+  adduser -D -s /bin/sh httpuser
+  echo "httpuser:$(openssl rand -base64 12)" | chpasswd
 fi
 
 # Start enabled services

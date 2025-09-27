@@ -77,6 +77,9 @@ ip addr add 203.0.113.1/24 dev br0 || true
 ip link set br0 up
 sysctl -w net.ipv4.ip_forward=1
 iptables -t nat -C POSTROUTING -s 203.0.113.0/24 -j MASQUERADE || iptables -t nat -A POSTROUTING -s 203.0.113.0/24 -j MASQUERADE
+echo "==> [5b/8] Ensuring LXC templates are up to date for all protocols (SSH, SOCKS5, HTTP, WireGuard)..."
+cp -f lxc-templates/alpine-config /var/lib/lxc/ || true
+cp -f lxc-templates/setup-services.sh /var/lib/lxc/ || true
 
 echo "==> [6/8] Creating folders for LXC templates and static assets..."
 mkdir -p lxc-templates static/css static/js
