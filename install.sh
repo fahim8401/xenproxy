@@ -128,7 +128,7 @@ fi
 
 echo "==> [8/8] Initializing database tables..."
 export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
-python3 -c "from app import db; db.create_all()"
+python3 -c "from models import db; db.create_all()" || true
 
 echo "==> Installation complete!"
 echo "To run the app:"
