@@ -8,12 +8,13 @@ A production-ready Python Flask application for managing a secure, multi-protoco
 
 - **LXC Container Orchestration:** One unprivileged container per IP, with resource limits and protocol selection (SSH, SOCKS5, HTTP, WireGuard).
 - **Admin Panel:** Custom UI (Flask + Jinja2, no external CSS frameworks), real-time stats, dark/light mode, bulk actions, logs.
-- **Security:** Argon2 password hashing, CSRF protection, rate limiting, input validation, HTTPS-only in production.
+- **Security:** Argon2 password hashing, CSRF protection, input validation, HTTPS-only in production.
 - **Monitoring:** Built-in host and container resource monitoring, abuse detection, auto-recovery, audit logs.
 - **System Management:** Linux bridge, NAT, auto IP assignment, PostgreSQL backend.
 - **Fully Automated Install:** Use `install.sh` for A-Z setup (system deps, DB, LXC, templates, static, DB init).
 - **Root-Compatible:** Works on both Ubuntu and AlmaLinux as root (or with sudo).
 - **Systemd Service:** Start/stop/restart with `systemctl` for production.
+- **Auto-Start:** After install, the app runs in the background automatically.
 
 ---
 
@@ -71,12 +72,10 @@ service/
       ```
     - Then re-run `sudo ./install.sh` to continue.
 
-3. **Run the app manually:**
-    ```bash
-    source venv/bin/activate
-    export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
-    python app.py
-    ```
+3. **After install, the app runs in the background.**
+    - View logs: `tail -f xenproxy.log`
+    - Stop: `pkill -f 'python app.py'`
+    - To run as a service: see below.
 
 4. **(Recommended) Run as a systemd service:**
     ```bash
@@ -98,7 +97,6 @@ service/
 
 - Admin login with Argon2 hashed passwords
 - CSRF protection on all forms
-- Rate limiting: 5 failed logins/minute, 100 requests/minute per IP
 - All API endpoints require admin authentication
 - Input validation for usernames, IPs, SSH keys
 - Unprivileged LXC containers with resource limits

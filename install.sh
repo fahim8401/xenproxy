@@ -132,7 +132,8 @@ export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
 python3 -c "from models import db; db.create_all()" || true
 
 echo "==> Installation complete!"
-echo "To run the app:"
-echo "  source venv/bin/activate"
-echo "  export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw"
-echo "  python app.py"
+echo "Starting the application..."
+nohup venv/bin/python app.py > xenproxy.log 2>&1 &
+echo "App started in background. To view logs: tail -f xenproxy.log"
+echo "To stop: pkill -f 'python app.py'"
+echo "To run as a service, see README.md for systemd instructions."
