@@ -63,7 +63,7 @@ templates/
     ```bash
     source venv/bin/activate
     export DATABASE_URL=postgresql://postgres:postgres@localhost/ipgw
-    python app.py
+    python3 app.py
     ```
 
 3. **Access the admin panel:**  
