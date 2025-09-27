@@ -7,7 +7,43 @@ A lightweight, production-ready LXC container management system with multi-proto
 
 ---
 
-## 🚀 Features
+## 🏃‍♂️ Running the Application
+
+### Development Mode (Recommended for testing)
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Initialize database
+python3 init_db.py
+
+# Run in development mode (no system modifications)
+python3 app.py
+```
+
+### Production Mode (Full system integration)
+```bash
+# Set production environment variable
+export FLASK_ENV=production
+# OR
+export PRODUCTION=true
+
+# Initialize database and system
+python3 init_db.py
+
+# Run with full system integration
+python3 app.py
+```
+
+**⚠️ Important**: Production mode will attempt to:
+- Create network bridges
+- Set up iptables rules
+- Start monitoring threads
+- Access LXC system directories
+
+Use development mode for testing and production mode only on properly configured LXC hosts.
+
+---
 
 - **Container Management**: Create, start, stop, delete LXC containers
 - **Multi-Protocol Support**: SSH, SOCKS5, HTTP proxy, WireGuard
