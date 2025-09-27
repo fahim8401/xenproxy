@@ -1,11 +1,12 @@
 [Unit]
 Description=XenProxy LXC Multi-Protocol Gateway Admin Panel (SQLite)
-After=network.target
+After=network.target lxc.service
+Requires=lxc.service
 
 [Service]
 Type=simple
-WorkingDirectory=/root/xenproxy
-ExecStart=/usr/bin/python3 /root/xenproxy/app.py
+WorkingDirectory=__INSTALL_DIR__
+ExecStart=__PYTHON_PATH__ __INSTALL_DIR__/app.py
 Restart=on-failure
 RestartSec=5
 User=root
@@ -15,6 +16,12 @@ Group=root
 # and can create network bridges
 AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN
 Environment="FLASK_ENV=production"
+Environment="PRODUCTION=true"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=xenproxy
 
 [Install]
 WantedBy=multi-user.target
