@@ -20,6 +20,9 @@ app.config['SESSION_COOKIE_SECURE'] = True
 db.init_app(app)
 csrf = CSRFProtect(app)
 limiter = Limiter(app, key_func=get_remote_address, default_limits=["100 per minute"])
+# For Flask-Limiter >=3.x, use:
+# limiter = Limiter(key_func=get_remote_address, default_limits=["100 per minute"])
+# limiter.init_app(app)
 
 @app.before_first_request
 def setup():
