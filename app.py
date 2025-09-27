@@ -21,8 +21,7 @@ db.init_app(app)
 csrf = CSRFProtect(app)
 # Limiter removed for compatibility
 
-@app.before_first_request
-def setup():
+with app.app_context():
     db.create_all()
     apply_all_system_rules()
     reconcile_db_with_lxc()
