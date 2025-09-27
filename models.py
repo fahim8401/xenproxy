@@ -60,3 +60,17 @@ class AuditLog(db.Model):
     timestamp = db.Column(db.DateTime, default=func.now())
 
     admin = db.relationship('Admin', backref=db.backref('audit_logs', lazy=True))
+
+class LxcTemplate(db.Model):
+    """LXC template model for storing container configuration templates."""
+    __tablename__ = 'lxc_templates'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    config_content = db.Column(db.Text, nullable=False)
+    is_default = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
+
+    def __repr__(self):
+        return f'<LxcTemplate {self.name}>'

@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 # from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
-from models import db, Admin, LxcContainer, SystemConfig, AuditLog
+from models import db, Admin, LxcContainer, SystemConfig, AuditLog, LxcTemplate
 from auth import login_required, authenticate_admin, create_admin
 from lxc_manager import create_container, delete_container, start_container, stop_container, get_container_info
 from system_manager import setup_lxc_bridge, apply_all_system_rules, reconcile_db_with_lxc
@@ -551,6 +551,196 @@ def api_test_connectivity():
         "internet": internet,
         "dns": dns,
         "gateway": gateway
+    })
+
+# Template Management Routes
+@app.route('/templates')
+@login_required
+def templates():
+    """Display LXC templates management page"""
+    templates = LxcTemplate.query.order_by(LxcTemplate.created_at.desc()).all()
+    return render_template('templates.html', templates=templates)
+
+@app.route('/api/templates', methods=['GET'])
+@login_required
+def api_get_templates():
+    """Get all templates as JSON"""
+    templates = LxcTemplate.query.order_by(LxcTemplate.created_at.desc()).all()
+    return jsonify([{
+        'id': t.id,
+        'name': t.name,
+        'description': t.description,
+        'is_default': t.is_default,
+        'created_at': t.created_at.isoformat() if t.created_at else None,
+        'updated_at': t.updated_at.isoformat() if t.updated_at else None
+    } for t in templates])
+
+@app.route('/api/templates', methods=['POST'])
+@login_required
+def api_create_template():
+    """Create a new LXC template"""
+    data = request.get_json()
+    
+    if not data or not data.get('name') or not data.get('config_content'):
+        return jsonify({"error": "Name and config content are required"}), 400
+    
+    # Check if template name already exists
+    existing = LxcTemplate.query.filter_by(name=data['name']).first()
+    if existing:
+        return jsonify({"error": "Template name already exists"}), 400
+    
+    # If this is set as default, unset other defaults
+    if data.get('is_default'):
+        LxcTemplate.query.filter_by(is_default=True).update({'is_default': False})
+    
+    template = LxcTemplate(
+        name=data['name'],
+        description=data.get('description', ''),
+        config_content=data['config_content'],
+        is_default=data.get('is_default', False)
+    )
+    
+    db.session.add(template)
+    db.session.commit()
+    
+    # Log the action
+    audit_log = AuditLog(
+        admin_id=session['admin_id'],
+        action='create_template',
+        details=f"Created template: {template.name}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit_log)
+    db.session.commit()
+    
+    return jsonify({
+        'id': template.id,
+        'name': template.name,
+        'description': template.description,
+        'is_default': template.is_default,
+        'created_at': template.created_at.isoformat(),
+        'updated_at': template.updated_at.isoformat()
+    })
+
+@app.route('/api/templates/<int:template_id>', methods=['PUT'])
+@login_required
+def api_update_template(template_id):
+    """Update an existing LXC template"""
+    template = LxcTemplate.query.get_or_404(template_id)
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    # Check name uniqueness if name is being changed
+    if 'name' in data and data['name'] != template.name:
+        existing = LxcTemplate.query.filter_by(name=data['name']).first()
+        if existing:
+            return jsonify({"error": "Template name already exists"}), 400
+        template.name = data['name']
+    
+    if 'description' in data:
+        template.description = data['description']
+    
+    if 'config_content' in data:
+        template.config_content = data['config_content']
+    
+    # Handle default flag
+    if 'is_default' in data:
+        if data['is_default'] and not template.is_default:
+            # Unset other defaults
+            LxcTemplate.query.filter_by(is_default=True).update({'is_default': False})
+        template.is_default = data['is_default']
+    
+    template.updated_at = datetime.now()
+    db.session.commit()
+    
+    # Log the action
+    audit_log = AuditLog(
+        admin_id=session['admin_id'],
+        action='update_template',
+        details=f"Updated template: {template.name}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit_log)
+    db.session.commit()
+    
+    return jsonify({
+        'id': template.id,
+        'name': template.name,
+        'description': template.description,
+        'is_default': template.is_default,
+        'created_at': template.created_at.isoformat(),
+        'updated_at': template.updated_at.isoformat()
+    })
+
+@app.route('/api/templates/<int:template_id>', methods=['DELETE'])
+@login_required
+def api_delete_template(template_id):
+    """Delete an LXC template"""
+    template = LxcTemplate.query.get_or_404(template_id)
+    
+    # Don't allow deletion of default template
+    if template.is_default:
+        return jsonify({"error": "Cannot delete default template"}), 400
+    
+    template_name = template.name
+    db.session.delete(template)
+    db.session.commit()
+    
+    # Log the action
+    audit_log = AuditLog(
+        admin_id=session['admin_id'],
+        action='delete_template',
+        details=f"Deleted template: {template_name}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit_log)
+    db.session.commit()
+    
+    return jsonify({"message": "Template deleted successfully"})
+
+@app.route('/api/templates/<int:template_id>/duplicate', methods=['POST'])
+@login_required
+def api_duplicate_template(template_id):
+    """Duplicate an existing LXC template"""
+    template = LxcTemplate.query.get_or_404(template_id)
+    
+    # Generate unique name
+    base_name = template.name
+    counter = 1
+    new_name = f"{base_name} (Copy)"
+    while LxcTemplate.query.filter_by(name=new_name).first():
+        counter += 1
+        new_name = f"{base_name} (Copy {counter})"
+    
+    new_template = LxcTemplate(
+        name=new_name,
+        description=f"Copy of {template.description or template.name}",
+        config_content=template.config_content,
+        is_default=False
+    )
+    
+    db.session.add(new_template)
+    db.session.commit()
+    
+    # Log the action
+    audit_log = AuditLog(
+        admin_id=session['admin_id'],
+        action='duplicate_template',
+        details=f"Duplicated template: {template.name} -> {new_name}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit_log)
+    db.session.commit()
+    
+    return jsonify({
+        'id': new_template.id,
+        'name': new_template.name,
+        'description': new_template.description,
+        'is_default': new_template.is_default,
+        'created_at': new_template.created_at.isoformat(),
+        'updated_at': new_template.updated_at.isoformat()
     })
 
 if __name__ == "__main__":
