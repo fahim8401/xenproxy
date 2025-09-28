@@ -20,6 +20,10 @@ except ImportError:
 import logging
 from logging.handlers import RotatingFileHandler
 
+# Ensure SECRET_KEY is set in production
+if os.environ.get('FLASK_ENV') == 'production' and not os.environ.get('SECRET_KEY'):
+    raise ValueError("SECRET_KEY must be set in production!")
+
 log_level = getattr(logging, os.environ.get('LOG_LEVEL', 'INFO').upper())
 log_file = os.environ.get('LOG_FILE', 'xenproxy.log')
 
@@ -165,7 +169,7 @@ with app.app_context():
 @app.route('/login', methods=['GET', 'POST'])
 @csrf.exempt  # Exempt login from CSRF protection
 def login():
-    if request.method == 'POST':
+    if request.method == 'POST' and os.environ.get('FLASK_ENV') != 'production':
         username = request.form['username']
         password = request.form['password']
         admin = authenticate_admin(username, password)

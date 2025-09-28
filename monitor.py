@@ -26,14 +26,17 @@ def get_host_resources():
 
 def get_container_resources(container_name):
     """Return resource stats for a container (CPU, mem, disk, net)."""
-    # This is a stub; real implementation would parse cgroup and veth stats
-    # Example: parse /sys/fs/cgroup, /sys/class/net/veth*/statistics
+    # Example implementation using psutil (replace with actual cgroup parsing)
+    cpu_usage = psutil.cpu_percent(interval=0.1)
+    memory_info = psutil.virtual_memory()
+    disk_info = psutil.disk_usage('/')
+    net_info = psutil.net_io_counters()
     return {
-        "cpu_percent": 0.0,
-        "memory_used": 0,
-        "disk_used": 0,
-        "net_bytes_in": 0,
-        "net_bytes_out": 0,
+        "cpu_percent": cpu_usage,
+        "memory_used": memory_info.used,
+        "disk_used": disk_info.used,
+        "net_bytes_in": net_info.bytes_recv,
+        "net_bytes_out": net_info.bytes_sent,
         "active_connections": 0,
     }
 
@@ -52,7 +55,7 @@ def update_bandwidth_stats(app):
                 
                 db.session.commit()
         except Exception as e:
-            print(f"Error updating bandwidth stats: {e}")
+            logger.error(f"Error updating bandwidth stats: {e}")
         
         time.sleep(60)
 
@@ -67,12 +70,16 @@ def check_container_health(container_name):
 
 def detect_abuse(container_name):
     """Detect abuse (high conn rate, port scan, bandwidth) and auto-disable."""
-    # This is a stub; real implementation would analyze logs/stats
     container = LxcContainer.query.filter_by(container_name=container_name).first()
-    if container and container.bandwidth_in > 1_000_000_000:
-        container.status = "disabled"
-        db.session.commit()
-        # Optionally, alert admin
+    if container:
+        # Example abuse detection logic
+        if container.bandwidth_in > 1_000_000_000:  # 1 GB threshold
+            container.status = "disabled"
+            db.session.commit()
+            logger.warning(f"Container {container_name} disabled due to high bandwidth usage.")
+            # Optionally, alert admin
+        elif container.active_connections > 1000:  # Connection threshold
+            logger.warning(f"Container {container_name} flagged for high connection rate.")
 
 def start_monitoring_thread(app):
     """Start background thread for bandwidth and health checks."""

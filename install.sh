@@ -166,11 +166,25 @@ print_status "[4/8] Setting up LXC bridge (xenproxy0) and network..."
 ip link set xenproxy0 down 2>/dev/null || true
 ip link delete xenproxy0 2>/dev/null || true
 
-# Create new bridge
+# Create new bridge (no default IP assigned)
 ip link add name xenproxy0 type bridge
-ip addr flush dev xenproxy0
-ip addr add 172.16.100.1/24 dev xenproxy0
 ip link set xenproxy0 up
+
+# Detect main ethernet interface (default route device)
+MAIN_IFACE=$(ip route | awk '/default/ {print $5; exit}')
+if [ -z "$MAIN_IFACE" ]; then
+    print_error "Could not detect main ethernet interface for bridge."
+    exit 1
+fi
+
+# Add main ethernet interface to bridge
+ip link set "$MAIN_IFACE" down
+ip link set "$MAIN_IFACE" master xenproxy0
+ip link set "$MAIN_IFACE" up
+ip link set xenproxy0 up
+
+# Do not assign any IP to the bridge; IPs will be managed from the frontend
+
 sysctl -w net.ipv4.ip_forward=1
 
 # Add iptables rule (check if it exists first)

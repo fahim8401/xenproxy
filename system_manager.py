@@ -13,13 +13,21 @@ def run_command(cmd, check=True):
     return result.stdout.strip()
 
 def setup_lxc_bridge(bridge_name, subnet):
-    """Create Linux bridge and assign subnet."""
+    """Create Linux bridge, add system ethernet, bring up, no default IP (frontend assigns IPs)."""
     run_command(f"ip link add name {bridge_name} type bridge", check=False)
-    run_command(f"ip addr flush dev {bridge_name}", check=False)
-    run_command(f"ip addr add {subnet} dev {bridge_name}", check=False)
-    run_command(f"ip link set {bridge_name} up")
-    run_command("sysctl -w net.ipv4.ip_forward=1")
-    run_command(f"iptables -t nat -A POSTROUTING -s {subnet} -j MASQUERADE", check=False)
+    run_command(f"ip link set {bridge_name} up", check=False)
+    # Detect main ethernet interface (default route device)
+    main_iface = run_command("ip route | awk '/default/ {print $5; exit}'", check=False)
+    if not main_iface:
+        logger.error("Could not detect main ethernet interface for bridge.")
+        raise RuntimeError("No main ethernet interface found.")
+    run_command(f"ip link set {main_iface} down", check=False)
+    run_command(f"ip link set {main_iface} master {bridge_name}", check=False)
+    run_command(f"ip link set {main_iface} up", check=False)
+    run_command(f"ip link set {bridge_name} up", check=False)
+    # Do not assign any IP to the bridge; IPs will be managed from the frontend
+    run_command("sysctl -w net.ipv4.ip_forward=1", check=False)
+    # No default MASQUERADE for subnet; handled per-container or by frontend
 
 def assign_ip_to_container(ip):
     """Validate and return available IP for assignment."""
