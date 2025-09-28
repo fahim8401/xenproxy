@@ -10,46 +10,71 @@
     <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="flex">
+    <div class="flex" role="main">
         <!-- Sidebar -->
-        <div class="w-64 bg-gray-800 text-white min-h-screen shadow-lg">
+        <nav class="w-64 bg-gray-900 text-white min-h-screen shadow-lg" aria-label="Main navigation">
             <div class="p-4 border-b border-gray-700">
                 <h1 class="text-xl font-bold text-white">XenProxy Admin</h1>
-                <p class="text-xs text-gray-400 mt-1">LXC Gateway Manager</p>
+                <p class="text-xs text-gray-300 mt-1">LXC Gateway Manager</p>
             </div>
-            <nav class="mt-6 px-2">
-                <a href="{{ url_for('dashboard') }}" class="sidebar-link {% if request.endpoint == 'dashboard' %}sidebar-active{% endif %}">
-                    <span class="mr-3">📊</span> Dashboard
-                </a>
-                <a href="{{ url_for('containers') }}" class="sidebar-link {% if request.endpoint == 'containers' %}sidebar-active{% endif %}">
-                    <span class="mr-3">🖥️</span> Containers
-                </a>
-                <a href="{{ url_for('templates') }}" class="sidebar-link {% if request.endpoint == 'templates' %}sidebar-active{% endif %}">
-                    <span class="mr-3">📋</span> Templates
-                </a>
-                <a href="{{ url_for('logs') }}" class="sidebar-link {% if request.endpoint == 'logs' %}sidebar-active{% endif %}">
-                    <span class="mr-3">📋</span> Audit Logs
-                </a>
-                <a href="{{ url_for('system_settings') }}" class="sidebar-link {% if request.endpoint == 'system_settings' %}sidebar-active{% endif %}">
-                    <span class="mr-3">⚙️</span> System Settings
-                </a>
-                <div class="border-t border-gray-600 mt-8 pt-4">
-                    <a href="{{ url_for('logout') }}" class="sidebar-link text-red-300 hover:bg-red-700 hover:text-white">
-                        <span class="mr-3">🚪</span> Logout
+            <ul class="mt-6 px-2 space-y-1">
+                <li>
+                    <a href="{{ url_for('dashboard') }}" class="sidebar-link {% if request.endpoint == 'dashboard' %}sidebar-active{% endif %}" aria-current="{% if request.endpoint == 'dashboard' %}page{% endif %}">
+                        <span class="mr-3" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17a2.5 2.5 0 01-2.5-2.5V7a2.5 2.5 0 015 0v7.5A2.5 2.5 0 0111 17z" /></svg>
+</span> Dashboard
                     </a>
-                </div>
-            </nav>
-        </div>
+                </li>
+                <li>
+                    <a href="{{ url_for('containers') }}" class="sidebar-link {% if request.endpoint == 'containers' %}sidebar-active{% endif %}" aria-current="{% if request.endpoint == 'containers' %}page{% endif %}">
+                        <span class="mr-3" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="20" height="12" x="2" y="6" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01" /></svg>
+</span> Containers
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('templates') }}" class="sidebar-link {% if request.endpoint == 'templates' %}sidebar-active{% endif %}" aria-current="{% if request.endpoint == 'templates' %}page{% endif %}">
+                        <span class="mr-3" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="16" height="20" x="4" y="2" rx="2" /><path d="M8 6h8M8 10h8M8 14h8" /></svg>
+</span> Templates
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logs') }}" class="sidebar-link {% if request.endpoint == 'logs' %}sidebar-active{% endif %}" aria-current="{% if request.endpoint == 'logs' %}page{% endif %}">
+                        <span class="mr-3" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" /></svg>
+</span> Audit Logs
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('system_settings') }}" class="sidebar-link {% if request.endpoint == 'system_settings' %}sidebar-active{% endif %}" aria-current="{% if request.endpoint == 'system_settings' %}page{% endif %}">
+                        <span class="mr-3" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7zm7.94-2.34a1 1 0 0 0 .26-1.09l-1.43-2.49a1 1 0 0 0-.85-.5h-2.72a1 1 0 0 0-.85.5l-1.43 2.49a1 1 0 0 0 .26 1.09l2.49 1.43a1 1 0 0 0 1.09-.26l1.43-2.49z" /></svg>
+</span> System Settings
+                    </a>
+                </li>
+                <li class="border-t border-gray-600 mt-8 pt-4">
+                    <a href="{{ url_for('logout') }}" class="sidebar-link text-red-200 hover:bg-red-700 hover:text-white" aria-label="Logout">
+                        <span class="mr-3" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1" /></svg>
+</span> Logout
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
         <!-- Main Content -->
         <div class="flex-1">
             <!-- Header -->
-            <header class="bg-white shadow-sm p-4">
-                <div class="flex justify-between items-center">
+            <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+                <div>
                     <h2 class="text-2xl font-semibold">{% block page_title %}Dashboard{% endblock %}</h2>
-                    <div class="text-sm text-gray-600">
-                        Admin Session Active
-                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="darkModeToggle" class="btn-small" aria-label="Toggle dark mode" title="Toggle dark mode">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 1 0 9.79 9.79z" /></svg>
+</button>
+                    <span class="text-sm text-gray-600">Admin Session Active</span>
                 </div>
             </header>
 
@@ -75,6 +100,25 @@
 
     <!-- Global Scripts -->
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script>
+    // Dark mode toggle
+    const toggleBtn = document.getElementById('darkModeToggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+        // On load, set theme from localStorage
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    }
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
