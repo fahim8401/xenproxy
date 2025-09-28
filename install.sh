@@ -94,6 +94,32 @@ elif [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     exit 0
 fi
 
+# Ensure LXC backend is installed and controllable before proceeding
+# (see LXC verification block below)
+print_status "[LXC] Verifying LXC installation and backend control..."
+if ! command -v lxc-ls >/dev/null 2>&1; then
+    print_error "LXC is not installed or not in PATH. Please check installation."
+    exit 1
+fi
+
+# Test LXC backend control: try to list containers and check for errors
+if ! lxc-ls >/dev/null 2>&1; then
+    print_error "LXC backend is not responding. Please check LXC installation and permissions."
+    exit 1
+fi
+
+# Check if lxc-templates directory exists and is writable
+if [ ! -d "/var/lib/lxc" ]; then
+    print_error "/var/lib/lxc does not exist. LXC may not be installed or initialized."
+    exit 1
+fi
+if [ ! -w "/var/lib/lxc" ]; then
+    print_error "No write permission to /var/lib/lxc. Please run as root or fix permissions."
+    exit 1
+fi
+
+print_status "LXC installation and backend control verified."
+
 # Check if already installed
 if [ -d "venv" ] && [ -f "instance/ip_gateway.db" ]; then
     print_warning "XenProxy appears to be already installed."

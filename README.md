@@ -1,7 +1,5 @@
+
 # XenProxy - LXC Multi-Protocol Gateway (SQLite Edition)
-
-
-
 
 A lightweight, production-ready LXC container management system with multi-protocol support (SSH, SOCKS5, HTTP proxy, WireGuard) and SQLite database backend. All monitoring, management, and configuration are accessible through a custom admin panel—no external monitoring tools required.
 
@@ -10,6 +8,7 @@ A lightweight, production-ready LXC container management system with multi-proto
 ## 🏃‍♂️ Running the Application
 
 ### Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/fahim8401/xenproxy.git
@@ -20,6 +19,7 @@ sudo ./install.sh
 ```
 
 ### Installation Options
+
 ```bash
 ./install.sh              # Install XenProxy
 ./install.sh --remove     # Remove XenProxy (keep database)
@@ -27,164 +27,63 @@ sudo ./install.sh
 ./install.sh --help       # Show help
 ```
 
+
 ### Development Mode (Recommended for testing)
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Initialize database
-python3 init_db.py
-
-# Run in development mode (no system modifications)
-python3 app.py
+# (Example) Create network bridges and set up iptables rules as needed
+# ...
 ```
-
-### Production Mode (Full system integration)
-```bash
-# Set production environment variable
-export FLASK_ENV=production
-# OR
-export PRODUCTION=true
-
-# Initialize database and system
-python3 init_db.py
-
-# Run with full system integration
-python3 app.py
-```
-
-**⚠️ Important**: Production mode will attempt to:
-- Create network bridges
-- Set up iptables rules
-- Start monitoring threads
-- Access LXC system directories
-
-Use development mode for testing and production mode only on properly configured LXC hosts.
-
----
-
-- **Container Management**: Create, start, stop, delete LXC containers
-- **Multi-Protocol Support**: SSH, SOCKS5, HTTP proxy, WireGuard
-- **Flexible Authentication**: SSH key or password authentication for containers
-- **SQLite Database**: Lightweight, serverless database with no external dependencies
-- **Web Admin Panel**: Clean, responsive web interface (Flask + Tailwind CSS)
-- **Resource Monitoring**: CPU, memory, disk, and network statistics
-- **Audit Logging**: Complete audit trail of all admin actions
-- **IP Management**: Automatic IP assignment with configurable subnets
-- **Bridge Networking**: Automated bridge setup and NAT rules
-- **Security**: Argon2 password hashing, CSRF protection, input validation, HTTPS-only in production
-- **Root-Compatible**: Works on both Ubuntu and AlmaLinux as root (or with sudo)
-- **Systemd Service**: Start/stop/restart with `systemctl` for production
-- **Auto-Start**: After install, the app runs in the background automatically
-
----
-
-## 🛠️ Requirements
-
-- **OS**: Ubuntu 18+, Debian 10+, AlmaLinux 8+, CentOS 8+, RHEL 8+
-- **Python**: 3.8+
-- **Root Access**: Required for LXC and network management
-- **Memory**: 2GB+ recommended
-- **Storage**: 10GB+ for containers and databases
-
----
 
 ## 📦 Quick Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/fahim8401/xenproxy.git
-cd xenproxy
-
 # Run the automated installer (requires root)
 chmod +x install.sh
 sudo ./install.sh
 # or: su - && ./install.sh
 ```
 
-The installer will:
-1. Install system dependencies (LXC, Python, SQLite)
-2. Set up Python virtual environment
-3. Install Python packages
-4. Configure LXC networking (bridge `xenproxy0`)
-5. Initialize SQLite database with default settings
-6. Start the application in the background
+1. Set up Python virtual environment
+2. Install Python packages
+3. Configure LXC networking (bridge `xenproxy0`)
+4. Initialize SQLite database with default settings
 
 ---
-
-## 🔧 Manual Installation
-
-If you prefer manual setup:
 
 ```bash
 # Install system dependencies
 apt update && apt install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables sqlite3
-
-# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
-
 # Install Python dependencies
 pip install -r requirements.txt
-
-# Initialize database
-python3 init_db.py
-
 # Start application
 python3 app.py
 ```
 
----
-
-## 🌐 Access & Login
-
 After installation, access the web panel at:
-- **URL**: http://your-server:3030
+
+- **URL**: [http://your-server:3030](http://your-server:3030)
 - **Default Username**: `admin`
 - **Default Password**: `admin1234`
 
-⚠️ **Security**: Change the default password immediately after first login!
-
----
-
-## 🗄️ Database
-
 ### SQLite Configuration
+
 - **Database File**: `instance/ip_gateway.db`
-- **Backup**: Simply copy the database file
-- **Migration**: No external database server required
 
-### Database Schema
-- `admins`: Admin users and authentication
-- `lxc_containers`: Container configuration and status
-- `system_config`: Global system settings
-- `audit_logs`: Complete audit trail
-
----
-
-## 📊 System Configuration
-
-Default network settings:
-- **Bridge**: `xenproxy0`
-- **Subnet**: `172.16.100.0/24`
-
----
-
-## 📂 Project Structure
-
-```
-app.py
-auth.py
+```text
 lxc_manager.py
 models.py
 monitor.py
 system_manager.py
 requirements.txt
-install.sh
 init_db.py
 instance/
     ip_gateway.db
-static/
     css/admin.css
     js/admin.js
     js/charts.js
@@ -243,7 +142,10 @@ MIT License. See LICENSE file for details.
 
 - **Root-Compatible:** Works on both Ubuntu and AlmaLinux as root (or with sudo).
 
-## 🛠️ Requirements- **Systemd Service:** Start/stop/restart with `systemctl` for production.
+
+## 🛠️ Requirements
+
+- **Systemd Service:** Start/stop/restart with `systemctl` for production
 
 - **Auto-Start:** After install, the app runs in the background automatically.
 
@@ -257,47 +159,29 @@ MIT License. See LICENSE file for details.
 
 - **Storage**: 10GB+ for containers and databases
 
+
 ```
 
-## 📦 Quick Installationapp.py
 
-models.py
+## 📦 Quick Installation
 
-```bashauth.py
+```bash
+# Clone the repository
+git clone https://github.com/fahim8401/xenproxy.git
+cd xenproxy
+# Run the automated installer (requires root)
+sudo ./install.sh
+```
 
-# Clone the repositorylxc_manager.py
+The installer will:
+1. Install system dependencies (LXC, Python, SQLite)
+2. Set up Python virtual environment
+3. Install Python packages
+4. Configure LXC networking (bridge `xenproxy0`)
+5. Initialize SQLite database with default settings
+6. Start the application
 
-git clone https://github.com/fahim8401/xenproxy.gitsystem_manager.py
-
-cd xenproxymonitor.py
-
-requirements.txt
-
-# Run the automated installer (requires root)README.md
-
-sudo ./install.shinstall.sh
-
-```lxc-templates/
-
-    alpine-config
-
-The installer will:    setup-services.sh
-
-1. Install system dependencies (LXC, Python, SQLite)static/
-
-2. Set up Python virtual environment    css/admin.css
-
-3. Install Python packages    js/admin.js
-
-4. Configure LXC networking (bridge `xenproxy0`)    js/charts.js
-
-5. Initialize SQLite database with default settingstemplates/
-
-6. Start the application    base.html
-
-    login.html
-
-## 🔧 Manual Installation    dashboard.html
+## 🔧 Manual Installation
 
     containers.html
 
@@ -473,7 +357,6 @@ curl --proxy http://172.16.100.10:8888 http://example.com
 
 - **Password Hashing**: Argon2 encryption for admin passwords- Database backup script included
 
-- **CSRF Protection**: Built-in CSRF tokens for all forms- Container configuration backup
 
 - **Session Management**: Secure session handling- Restore procedure documented
 
@@ -498,20 +381,13 @@ To run as a systemd service:- **Ubuntu 22.04+** (Debian-based)
 sudo cp service/xenproxy.service /etc/systemd/system/---
 
 
-
 # Reload systemd and start service## License
 
-sudo systemctl daemon-reload
-
-sudo systemctl enable xenproxyMIT License
 
 sudo systemctl start xenproxy
 
 ---
 
-# Check status
-
-sudo systemctl status xenproxy## Credits
 
 ```
 
@@ -519,7 +395,9 @@ sudo systemctl status xenproxy## Credits
 
 ## 📊 Monitoring & Logs
 
+
 ### Application Logs
+
 ```bash
 # View live logs
 tail -f xenproxy.log
@@ -528,43 +406,46 @@ tail -f xenproxy.log
 sudo journalctl -u xenproxy -f
 ```
 
+
 ### System Resources
+
 - **Web Interface**: Real-time charts in admin panel
 - **Command Line**: `htop`, `iotop`, `nethogs`
 
 ## 🧹 Maintenance
 
+
 ### Database Backup
+
 ```bash
 # Backup SQLite database
 cp instance/ip_gateway.db backup/ip_gateway_$(date +%Y%m%d).db
 ```
 
+
 ### Container Cleanup
+
 ```bash
 # Remove stopped containers
 sudo lxc-ls --stopped | xargs -r sudo lxc-destroy -n
 ```
 
 ### Log Rotation
+
 ```bash
 # Setup logrotate for application logs
-echo '/path/to/xenproxy.log {
-    weekly
-    rotate 4
-    compress
     delaycompress
-    create 0644 root root
 }' > /etc/logrotate.d/xenproxy
 ```
 
 ## 🛠️ Troubleshooting
 
-### Common Issues
 
-**1. Bridge Creation Failed**
+
+
+### 1. Bridge Creation Failed
+
 ```bash
-# Check if bridge exists
 ip link show xenproxy0
 
 # Manually create bridge
@@ -573,7 +454,8 @@ sudo ip addr add 172.16.100.1/24 dev xenproxy0
 sudo ip link set xenproxy0 up
 ```
 
-**2. Container Won't Start**
+### 2. Container Won't Start
+
 ```bash
 # Check LXC status
 sudo lxc-ls -f
@@ -585,14 +467,16 @@ sudo lxc-info -n container-name
 sudo lxc-console -n container-name
 ```
 
-**3. Database Issues**
+### 3. Database Issues
+
 ```bash
 # Recreate database
 rm instance/ip_gateway.db
 python3 init_db.py
 ```
 
-**4. Permission Errors**
+### 4. Permission Errors
+
 ```bash
 # Fix permissions
 sudo chown -R root:root /path/to/xenproxy
@@ -611,6 +495,7 @@ sudo chmod +x install.sh init_db.py app.py
 ## 📚 API Endpoints
 
 The application provides REST API endpoints:
+
 - `GET /api/host_stats`: Host system statistics
 - `GET /api/container_stats/<name>`: Container-specific stats
 - `GET /api/logs`: Recent audit log entries
@@ -644,4 +529,7 @@ If migrating from the PostgreSQL version:
 
 ---
 
-**Made with ❤️ for container enthusiasts**
+
+---
+
+Made with ❤️ for container enthusiasts

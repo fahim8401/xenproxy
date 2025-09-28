@@ -35,6 +35,8 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+if os.environ.get('FLASK_ENV') == 'production':
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
