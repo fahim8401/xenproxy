@@ -178,7 +178,6 @@ if [ -z "$MAIN_IFACE" ]; then
 fi
 
 # Add main ethernet interface to bridge
-ip link set "$MAIN_IFACE" down
 ip link set "$MAIN_IFACE" master xenproxy0
 ip link set "$MAIN_IFACE" up
 ip link set xenproxy0 up
