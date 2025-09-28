@@ -38,12 +38,12 @@ def authenticate_admin(username, password):
         return admin
     return None
 
-def create_admin(username, password):
+def create_admin(username, password, must_change_password=False):
     if not validate_username(username):
         raise ValueError("Invalid username format")
     if len(password) < 8:
         raise ValueError("Password must be at least 8 characters")
-    admin = Admin(username=username, password_hash=hash_password(password))
+    admin = Admin(username=username, password_hash=hash_password(password), must_change_password=must_change_password)
     db.session.add(admin)
     db.session.commit()
     return admin

@@ -2,6 +2,37 @@
 # XenProxy LXC Multi-Protocol IP Gateway Admin Panel Installer (SQLite version)
 # Compatible with Ubuntu/Debian and AlmaLinux/CentOS/RHEL
 
+# Example Netplan YAML for advanced network setup (bonds, bridges, static IPs)
+# ---
+# network:
+#     bonds:
+#         bond0:
+#             interfaces:
+#             - eth0
+#             - eth1
+#             parameters:
+#                 lacp-rate: fast
+#                 mode: 802.3ad
+#                 transmit-hash-policy: layer2
+#     ethernets:
+#         eth0: {}
+#         eth1: {}
+#     version: 2
+#     bridges:
+#         xenproxy0:
+#           addresses: 
+#           - 202.136.75.2/24
+#           interfaces: [ bond0 ]
+#           gateway4: 202.136.75.1
+#           macaddress: 00:16:3e:7f:ae:93
+#           nameservers:
+#             addresses:
+#             - 8.8.8.8
+#             - 8.8.4.4
+#             - 2001:4860:4860::8888
+#             - 2001:4860:4860::8844
+# ---
+
 set -e
 
 # Colors for output
@@ -144,13 +175,23 @@ fi
 print_status "[1/8] Installing system dependencies..."
 if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
   apt-get update
-  apt-get install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute2 git curl sqlite3 wget
+  apt-get install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute2 git curl sqlite3 wget network-manager
 elif [[ "$OS" == "almalinux" || "$OS" == "centos" || "$OS" == "rhel" ]]; then
-  dnf install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute git curl sqlite wget
+  dnf install -y python3-pip python3-venv lxc lxc-templates bridge-utils iptables iproute git curl sqlite wget NetworkManager
 else
   print_error "Unsupported OS: $OS"
   print_info "Supported OS: Ubuntu, Debian, AlmaLinux, CentOS, RHEL"
   exit 1
+fi
+
+print_status "[1.5/8] Setting up netplan bridge and bond config..."
+if [ -f 01-xenproxy.yaml ]; then
+  cp 01-xenproxy.yaml /etc/netplan/01-xenproxy.yaml
+  print_status "Netplan config copied to /etc/netplan/01-xenproxy.yaml"
+  netplan apply
+  print_status "Netplan configuration applied"
+else
+  print_warning "01-xenproxy.yaml not found, skipping netplan setup."
 fi
 
 print_status "[2/8] Setting up Python virtual environment..."
@@ -162,6 +203,8 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 print_status "[4/8] Setting up LXC bridge (xenproxy0) and network..."
+
+
 # Clean up any existing bridge
 ip link set xenproxy0 down 2>/dev/null || true
 ip link delete xenproxy0 2>/dev/null || true

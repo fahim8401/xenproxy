@@ -126,8 +126,8 @@ def initialize_application():
     from auth import create_admin
     if not Admin.query.first():
         try:
-            create_admin('admin', 'admin1234')
-            print("✓ Created default admin user (admin/admin1234)")
+            create_admin('admin', 'admin1234', must_change_password=True)
+            print("✓ Created default admin user (admin/admin1234, must change password on first login)")
         except Exception as e:
             print(f"⚠️  Warning: Could not create default admin user: {e}")
     else:
@@ -174,6 +174,10 @@ def login():
         password = request.form['password']
         admin = authenticate_admin(username, password)
         if admin:
+            if getattr(admin, "must_change_password", False):
+                session['admin_id'] = admin.id
+                flash('You must change your password before continuing.', 'warning')
+                return redirect(url_for('change_password'))
             session['admin_id'] = admin.id
             admin.last_login = datetime.utcnow()
             db.session.commit()
@@ -191,6 +195,27 @@ def login():
         else:
             flash('Invalid credentials', 'danger')
     return render_template('login.html')
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    admin = Admin.query.get(session['admin_id'])
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        if len(new_password) < 8:
+            flash('Password must be at least 8 characters.', 'danger')
+        elif new_password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+        else:
+            from auth import hash_password
+            admin.password_hash = hash_password(new_password)
+            admin.must_change_password = False
+            db.session.commit()
+            flash('Password changed successfully. Please log in again.', 'success')
+            session.clear()
+            return redirect(url_for('login'))
+    return render_template('change_password.html', admin=admin)
 
 @app.route('/logout')
 @login_required
@@ -637,6 +662,17 @@ def api_get_templates():
         'updated_at': t.updated_at.isoformat() if t.updated_at else None
     } for t in templates])
 
+import re
+
+def sanitize_template_input(name, description):
+    # Only allow alphanumeric, spaces, dashes, and underscores for name
+    if not re.match(r'^[\w\s\-]{3,64}$', name):
+        return None, "Invalid template name format"
+    # Limit description length and strip dangerous characters
+    if description and len(description) > 256:
+        return None, "Description too long"
+    return name.strip(), None
+
 @app.route('/api/templates', methods=['POST'])
 @login_required
 def api_create_template():
@@ -645,9 +681,13 @@ def api_create_template():
     
     if not data or not data.get('name') or not data.get('config_content'):
         return jsonify({"error": "Name and config content are required"}), 400
+
+    name, err = sanitize_template_input(data['name'], data.get('description', ''))
+    if err:
+        return jsonify({"error": err}), 400
     
     # Check if template name already exists
-    existing = LxcTemplate.query.filter_by(name=data['name']).first()
+    existing = LxcTemplate.query.filter_by(name=name).first()
     if existing:
         return jsonify({"error": "Template name already exists"}), 400
     
@@ -656,7 +696,7 @@ def api_create_template():
         LxcTemplate.query.filter_by(is_default=True).update({'is_default': False})
     
     template = LxcTemplate(
-        name=data['name'],
+        name=name,
         description=data.get('description', ''),
         config_content=data['config_content'],
         is_default=data.get('is_default', False)
@@ -807,7 +847,7 @@ def api_duplicate_template(template_id):
 
 if __name__ == "__main__":
     # Production-ready server configuration
-    host = os.environ.get('HOST', '127.0.0.1')
+    host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 3030))
     debug = os.environ.get('FLASK_ENV') != 'production' and os.environ.get('DEBUG', 'false').lower() == 'true'
     

@@ -114,6 +114,16 @@ lxc-templates/
 
 ---
 
+## 🔒 Production HTTPS & Secure Deployment
+
+- Always deploy behind a reverse proxy (e.g., Nginx, Caddy, Apache) with HTTPS enabled.
+- Redirect all HTTP traffic to HTTPS.
+- Set `SESSION_COOKIE_SECURE=True` and `SESSION_COOKIE_SAMESITE=Strict` in production.
+- Use strong TLS certificates (Let's Encrypt or commercial CA).
+- Restrict admin panel access by IP or VPN if possible.
+- Never expose the Flask development server directly to the internet.
+- Change all default credentials before production use.
+
 ## 📝 License
 
 MIT License. See LICENSE file for details.

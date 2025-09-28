@@ -1,0 +1,27 @@
+network:
+    version: 2
+    ethernets:
+        eth0: {}
+        eth1: {}
+    bonds:
+        bond0:
+            interfaces:
+                - eth0
+                - eth1
+            parameters:
+                mode: 802.3ad
+                lacp-rate: fast
+                transmit-hash-policy: layer2
+    bridges:
+        xenproxy0:
+            interfaces: [bond0]
+            addresses:
+                - 202.136.75.2/24
+            gateway4: 202.136.75.1
+            macaddress: 00:16:3e:7f:ae:93
+            nameservers:
+                addresses:
+                    - 8.8.8.8
+                    - 8.8.4.4
+                    - 2001:4860:4860::8888
+                    - 2001:4860:4860::8844
